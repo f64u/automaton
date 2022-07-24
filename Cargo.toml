@@ -4,4 +4,5 @@ members = [
   "gameoflife",
   "cellular_automaton",
   "spaces",
+  "briansbrain",
 ]

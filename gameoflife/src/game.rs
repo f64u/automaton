@@ -1,6 +1,6 @@
 use cellular_automaton::{
     cell::BasicCell,
-    common::{Dimensions, Position, Representable},
+    common::{Dimensions, Position},
     world::BasicWorld,
 };
 use itertools::Itertools;
