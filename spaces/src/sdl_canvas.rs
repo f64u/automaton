@@ -148,6 +148,7 @@ where
     let size = config.pixel_size;
     let mut gui = Gui::new(world, SizedOutput(&mut canvas, size));
     gui.clear_output();
+    gui.draw()?;
 
     let mut event_dump = sdl_context.event_pump()?;
 
