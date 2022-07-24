@@ -2,7 +2,7 @@ use cellular_automaton::{
     common::{Dimensions, Representable},
     world::BasicWorld,
 };
-use spaces::curisive_canvas::{self, StringCell, StringWorld};
+use spaces::cursive_canvas::{self, StringCell, StringWorld};
 
 use crate::game::{Cell, World};
 
@@ -34,7 +34,7 @@ impl StringWorld for World {}
 
 pub(crate) fn run() -> Result<(), String> {
     let world = World::new_random(Dimensions(70, 70));
-    curisive_canvas::run(world)?;
+    cursive_canvas::run(world)?;
 
     Ok(())
 }

@@ -1,4 +1,4 @@
 pub mod common;
-pub mod curisive_canvas;
+pub mod cursive_canvas;
 #[cfg(feature = "sdl2")]
 pub mod sdl_canvas;
