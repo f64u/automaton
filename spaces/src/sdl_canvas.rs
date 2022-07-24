@@ -191,10 +191,12 @@ where
                 }
                 Event::MouseButtonDown { x, y, .. } => {
                     let (dx, dy) = config.downscale((x, y));
-                    if is_paused && let Some(cell) = gui.world_mut().get_cell_mut((dx, dy)) {
-                        cell.next();
-                        gui.clear_output();
-                        gui.draw()?;
+                    if is_paused {
+                        if let Some(cell) = gui.world_mut().get_cell_mut((dx, dy)) {
+                            cell.next();
+                            gui.clear_output();
+                            gui.draw()?;
+                        }
                     }
                 }
 
