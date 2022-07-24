@@ -144,6 +144,8 @@ where
 
     let mut event_dump = sdl_context.event_pump()?;
 
+    let mut is_paused = false;
+
     'running: loop {
         for event in event_dump.poll_iter() {
             match event {
@@ -158,6 +160,12 @@ where
                 } => {
                     gui.world_mut().refresh_random();
                 }
+                Event::KeyDown {
+                    keycode: Some(Keycode::Space),
+                    ..
+                } => {
+                    is_paused = !is_paused;
+                }
                 Event::MouseMotion { .. } => {}
                 e => {
                     println!("{e:?}");
@@ -165,7 +173,9 @@ where
             }
         }
 
-        gui.update()?;
+        if !is_paused {
+            gui.update()?;
+        }
 
         std::thread::sleep(Duration::from_millis(50));
         gui.clear_output();
