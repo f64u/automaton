@@ -1,14 +1,9 @@
 [package]
-edition = "2021"
-name = "spaces"
+name = "cellular_automaton"
 version = "0.1.0"
+edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-cellular_automaton = {path = "../cellular_automaton"}
-cursive = "0.19.0"
 itertools = "0.10.3"
-rand = "0.8.5"
-sdl2 = "0.35.2"
-

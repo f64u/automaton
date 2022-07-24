@@ -1,0 +1,7 @@
+[workspace]
+
+members = [
+  "gameoflife",
+  "cellular_automaton",
+  "spaces",
+]
