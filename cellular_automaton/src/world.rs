@@ -14,7 +14,10 @@ pub trait BasicWorld {
     fn cells(&self) -> &Vec<Self::Cell>;
     fn cells_mut(&mut self) -> &mut Vec<Self::Cell>;
     fn dimensions(&self) -> Dimensions;
-    fn tick(&mut self);
+    fn next(&self) -> Vec<Self::Cell>;
+    fn tick(&mut self) {
+        *self.cells_mut() = self.next();
+    }
 
     fn get_cell(&self, p: Position) -> Option<&Self::Cell> {
         self.dimensions()

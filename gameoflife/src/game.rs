@@ -7,6 +7,7 @@ use itertools::Itertools;
 
 const PROPORTION: f64 = 0.9;
 
+#[derive(Clone)]
 pub enum Cell {
     Alive,
     Dead,
@@ -83,18 +84,21 @@ impl BasicWorld for World {
         self.dimensions
     }
 
-    fn tick(&mut self) {
+    fn next(&self) -> Vec<Self::Cell> {
+        let mut cells: Vec<Cell> = self.cells().iter().map(|c| c.clone()).collect();
+
         for (i, j) in (0..self.dimensions().0).cartesian_product(0..self.dimensions().1) {
             let p = (i as isize, j as isize);
             let count = self.count_alive_neighbors(p);
-            let cell = self.get_cell_mut(p).unwrap();
-
+            let cell = &mut cells[self.dimensions().get_index(p).unwrap()];
             match cell {
                 &mut Cell::Alive if count < 2 || count > 3 => cell.kill(),
                 &mut Cell::Dead if count == 3 => cell.resurrect(),
                 _ => {}
             }
         }
+
+        cells
     }
 
     fn refresh_random(&mut self) {

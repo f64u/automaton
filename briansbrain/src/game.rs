@@ -2,6 +2,7 @@ use cellular_automaton::{cell::BasicCell, common::Dimensions, world::BasicWorld}
 
 pub const PROPORTION: f64 = 0.9;
 
+#[derive(Clone)]
 pub enum Cell {
     On,
     Dying,
@@ -81,7 +82,8 @@ impl BasicWorld for World {
         self.dimensions
     }
 
-    fn tick(&mut self) {
+    fn next(&self) -> Vec<Self::Cell> {
+        let mut cells: Vec<Cell> = self.cells().iter().map(|c| c.clone()).collect();
         for i in 0..self.dimensions.0 {
             for j in 0..self.dimensions.1 {
                 let p = (i as isize, j as isize);
@@ -93,7 +95,8 @@ impl BasicWorld for World {
                         _ => false,
                     })
                     .count();
-                let cell = self.get_cell_mut(p).unwrap();
+                let cell = &mut cells[self.dimensions().get_index(p).unwrap()];
+
                 match *cell {
                     Cell::Off if alive == 2 => cell.resurrect(),
                     Cell::Dying => cell.kill(),
@@ -102,5 +105,6 @@ impl BasicWorld for World {
                 }
             }
         }
+        cells
     }
 }
