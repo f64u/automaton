@@ -131,7 +131,7 @@ where
     W: ColoredWorld,
     W::Cell: ColoredCell,
 {
-    let millis = config.millis;
+    let mut millis = config.millis;
 
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video()?;
@@ -181,6 +181,26 @@ where
                     ..
                 } => {
                     is_paused = !is_paused;
+                }
+                Event::KeyDown {
+                    keycode: Some(Keycode::L),
+                    ..
+                } => {
+                    millis = 10.max(millis - 10);
+                }
+                Event::KeyDown {
+                    keycode: Some(Keycode::H),
+                    ..
+                } => {
+                    millis += 10;
+                }
+                Event::KeyDown {
+                    keycode: Some(Keycode::N),
+                    ..
+                } => {
+                    if is_paused {
+                        gui.update()?;
+                    }
                 }
                 Event::KeyDown {
                     keycode: Some(Keycode::B),
