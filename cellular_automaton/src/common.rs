@@ -19,4 +19,8 @@ impl Dimensions {
     pub fn get_pos(&self, index: usize) -> Position {
         ((index % self.0) as isize, (index / self.0) as isize)
     }
+
+    pub fn size(&self) -> usize {
+        self.0 * self.1
+    }
 }

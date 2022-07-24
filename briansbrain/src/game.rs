@@ -2,10 +2,11 @@ use cellular_automaton::{cell::BasicCell, common::Dimensions, world::BasicWorld}
 
 pub const PROPORTION: f64 = 0.9;
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub enum Cell {
     On,
     Dying,
+    #[default]
     Off,
 }
 

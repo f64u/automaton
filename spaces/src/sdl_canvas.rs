@@ -15,13 +15,15 @@ use crate::common::SizedOutput;
 pub struct Config {
     pub dimensions: Dimensions,
     pub pixel_size: usize,
+    pub millis: u64,
 }
 
 impl Config {
-    pub fn new(dimensions: Dimensions, pixel_size: usize) -> Self {
+    pub fn new(dimensions: Dimensions, pixel_size: usize, millis: u64) -> Self {
         Self {
             dimensions,
             pixel_size,
+            millis,
         }
     }
 
@@ -129,6 +131,8 @@ where
     W: ColoredWorld,
     W::Cell: ColoredCell,
 {
+    let millis = config.millis;
+
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video()?;
 
@@ -161,6 +165,10 @@ where
                 | Event::KeyDown {
                     keycode: Some(Keycode::Escape),
                     ..
+                }
+                | Event::KeyDown {
+                    keycode: Some(Keycode::Q),
+                    ..
                 } => break 'running,
                 Event::KeyDown {
                     keycode: Some(Keycode::R),
@@ -174,10 +182,15 @@ where
                 } => {
                     is_paused = !is_paused;
                 }
-                Event::MouseMotion { .. } => {}
+                Event::KeyDown {
+                    keycode: Some(Keycode::B),
+                    ..
+                } => {
+                    gui.world_mut().blank();
+                    gui.draw()?;
+                }
                 Event::MouseButtonDown { x, y, .. } => {
                     let (dx, dy) = config.downscale((x, y));
-                    println!("Clicked {:?}, pixel {:?}", (x, y), (dx, dy));
                     if is_paused && let Some(cell) = gui.world_mut().get_cell_mut((dx, dy)) {
                         cell.next();
                         gui.clear_output();
@@ -185,9 +198,7 @@ where
                     }
                 }
 
-                e => {
-                    println!("{e:?}");
-                }
+                _ => {}
             }
         }
 
@@ -195,7 +206,7 @@ where
             gui.update()?;
         }
 
-        std::thread::sleep(Duration::from_millis(50));
+        std::thread::sleep(Duration::from_millis(millis));
         gui.clear_output();
     }
 

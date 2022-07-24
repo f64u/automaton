@@ -19,6 +19,10 @@ pub trait BasicWorld {
         *self.cells_mut() = self.next();
     }
 
+    fn blank(&mut self) {
+        *self.cells_mut() = vec![Self::Cell::default(); self.dimensions().size()];
+    }
+
     fn get_cell(&self, p: Position) -> Option<&Self::Cell> {
         self.dimensions()
             .get_index(p)
