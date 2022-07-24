@@ -2,7 +2,6 @@
 
 members = [
   "gameoflife",
-  "briansbrain",
   "cellular_automaton",
   "spaces",
 ]
