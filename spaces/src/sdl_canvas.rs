@@ -10,7 +10,7 @@ use sdl2::{
     event::Event, keyboard::Keycode, pixels::Color, rect::Rect, render::Canvas, video::Window,
 };
 
-use crate::common::{Output, SizedOutput};
+use crate::common::SizedOutput;
 
 pub struct Config {
     pub dimensions: Dimensions,
@@ -58,7 +58,6 @@ where
     W: ColoredWorld,
     W::Cell: ColoredCell,
 {
-    config: Config,
     world: W,
     output: SizedOutput<&'a mut Canvas<Window>>,
 }
@@ -86,12 +85,8 @@ where
     W: ColoredWorld,
     W::Cell: ColoredCell,
 {
-    fn new(config: Config, world: W, output: SizedOutput<&'a mut Canvas<Window>>) -> Self {
-        Gui {
-            config,
-            world,
-            output,
-        }
+    fn new(world: W, output: SizedOutput<&'a mut Canvas<Window>>) -> Self {
+        Gui { world, output }
     }
 
     fn clear_output(&mut self) {
@@ -144,7 +139,7 @@ where
 
     let mut canvas = window.into_canvas().build().map_err(|s| s.to_string())?;
     let size = config.pixel_size;
-    let mut gui = Gui::new(config, world, SizedOutput(&mut canvas, size));
+    let mut gui = Gui::new(world, SizedOutput(&mut canvas, size));
     gui.clear_output();
 
     let mut event_dump = sdl_context.event_pump()?;

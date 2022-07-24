@@ -92,8 +92,8 @@ where
     let mut canvas = Terminal::new(world, Output(text));
     siv.add_global_callback('q', |s| s.quit());
 
-    std::thread::spawn(move || loop {
-        canvas.update();
+    std::thread::spawn(move || {
+        let _ = canvas.update();
         std::thread::sleep(Duration::from_millis(100));
     });
 
