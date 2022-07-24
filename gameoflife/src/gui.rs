@@ -10,9 +10,9 @@ use crate::game::{Cell, World};
 impl Representable<Color> for Cell {
     fn represent(&self) -> Color {
         if self.is_alive() {
-            Color::RGB(0, 0, 0)
+            Color::BLACK
         } else {
-            Color::RGB(255, 255, 255)
+            Color::WHITE
         }
     }
 }
@@ -29,7 +29,7 @@ impl ColoredWorld for World {}
 
 pub(crate) fn run() -> Result<(), String> {
     let config = Config::new(Dimensions(1000, 800), 5);
-    let world = World::new_random(Dimensions(1000 / 5, 800 / 5));
+    let world = World::new_random(Dimensions(config.pixel_count_x(), config.pixel_count_y()));
     sdl_canvas::run(config, world, "Game of Life")?;
 
     Ok(())

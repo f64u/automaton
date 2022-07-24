@@ -72,7 +72,7 @@ impl OutputField for Output<TextContent> {
     type Data = String;
 
     fn update(&mut self, data: Self::Data) -> Result<(), String> {
-        self.0.set_content(data);
+        self.set_content(data);
         Ok(())
     }
 }

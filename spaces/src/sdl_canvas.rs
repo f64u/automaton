@@ -1,7 +1,5 @@
 use std::time::Duration;
 
-const PIXEL_SIZE: usize = 5;
-
 use cellular_automaton::{
     cell::BasicCell,
     common::{Dimensions, Representable},
@@ -12,7 +10,7 @@ use sdl2::{
     event::Event, keyboard::Keycode, pixels::Color, rect::Rect, render::Canvas, video::Window,
 };
 
-use crate::common::Output;
+use crate::common::{Output, SizedOutput};
 
 pub struct Config {
     pub dimensions: Dimensions,
@@ -27,11 +25,11 @@ impl Config {
         }
     }
 
-    fn pixel_count_x(&self) -> usize {
+    pub fn pixel_count_x(&self) -> usize {
         self.dimensions.0 / self.pixel_size
     }
 
-    fn pixel_count_y(&self) -> usize {
+    pub fn pixel_count_y(&self) -> usize {
         self.dimensions.1 / self.pixel_size
     }
 }
@@ -62,10 +60,10 @@ where
 {
     config: Config,
     world: W,
-    output: Output<&'a mut Canvas<Window>>,
+    output: SizedOutput<&'a mut Canvas<Window>>,
 }
 
-impl<'a, W> Space<W, Output<&'a mut Canvas<Window>>, RepresentedWorld> for Gui<'a, W>
+impl<'a, W> Space<W, SizedOutput<&'a mut Canvas<Window>>, RepresentedWorld> for Gui<'a, W>
 where
     W: ColoredWorld,
     W::Cell: ColoredCell,
@@ -78,7 +76,7 @@ where
         &self.world
     }
 
-    fn output_mut(&mut self) -> &mut Output<&'a mut Canvas<Window>> {
+    fn output_mut(&mut self) -> &mut SizedOutput<&'a mut Canvas<Window>> {
         &mut self.output
     }
 }
@@ -88,7 +86,7 @@ where
     W: ColoredWorld,
     W::Cell: ColoredCell,
 {
-    fn new(config: Config, world: W, output: Output<&'a mut Canvas<Window>>) -> Self {
+    fn new(config: Config, world: W, output: SizedOutput<&'a mut Canvas<Window>>) -> Self {
         Gui {
             config,
             world,
@@ -102,17 +100,17 @@ where
     }
 }
 
-impl<'a> OutputField for Output<&'a mut Canvas<Window>> {
+impl<'a> OutputField for SizedOutput<&'a mut Canvas<Window>> {
     type Data = RepresentedWorld;
 
     fn update(&mut self, data: Self::Data) -> Result<(), String> {
         for (index, cell) in data.0.iter().enumerate() {
             let (x, y) = data.1.get_pos(index);
             let rect = Rect::new(
-                (x as usize * PIXEL_SIZE) as i32,
-                (y as usize * PIXEL_SIZE) as i32,
-                PIXEL_SIZE as u32,
-                PIXEL_SIZE as u32,
+                (x as usize * self.1) as i32,
+                (y as usize * self.1) as i32,
+                self.1 as u32,
+                self.1 as u32,
             );
 
             self.set_draw_color(*cell);
@@ -145,7 +143,8 @@ where
         .map_err(|s| s.to_string())?;
 
     let mut canvas = window.into_canvas().build().map_err(|s| s.to_string())?;
-    let mut gui = Gui::new(config, world, Output(&mut canvas));
+    let size = config.pixel_size;
+    let mut gui = Gui::new(config, world, SizedOutput(&mut canvas, size));
     gui.clear_output();
 
     let mut event_dump = sdl_context.event_pump()?;

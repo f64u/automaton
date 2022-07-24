@@ -1,6 +1,6 @@
 use cellular_automaton::{cell::BasicCell, common::Dimensions, world::BasicWorld};
 
-const PROPORTION: f64 = 0.9;
+pub const PROPORTION: f64 = 0.9;
 
 pub enum Cell {
     On,
