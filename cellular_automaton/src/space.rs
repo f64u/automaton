@@ -9,10 +9,18 @@ where
     fn world(&self) -> &W;
     fn output_mut(&mut self) -> &mut O;
 
-    fn update(&mut self) -> Result<(), String> {
-        self.world_mut().tick();
+    fn draw(&mut self) -> Result<(), String> {
         let data = self.world().represent();
         self.output_mut().update(data)
+    }
+
+    fn tick(&mut self) {
+        self.world_mut().tick();
+    }
+
+    fn update(&mut self) -> Result<(), String> {
+        self.tick();
+        self.draw()
     }
 }
 

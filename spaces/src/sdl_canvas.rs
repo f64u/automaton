@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use cellular_automaton::{
     cell::BasicCell,
-    common::{Dimensions, Representable},
+    common::{Dimensions, Position, Representable},
     space::{OutputField, Space},
     world::BasicWorld,
 };
@@ -31,6 +31,13 @@ impl Config {
 
     pub fn pixel_count_y(&self) -> usize {
         self.dimensions.1 / self.pixel_size
+    }
+
+    pub fn downscale(&self, (x, y): (i32, i32)) -> Position {
+        (
+            x as isize / self.pixel_size as isize,
+            y as isize / self.pixel_size as isize,
+        )
     }
 }
 
@@ -144,7 +151,7 @@ where
 
     let mut event_dump = sdl_context.event_pump()?;
 
-    let mut is_paused = false;
+    let mut is_paused = true;
 
     'running: loop {
         for event in event_dump.poll_iter() {
@@ -167,6 +174,16 @@ where
                     is_paused = !is_paused;
                 }
                 Event::MouseMotion { .. } => {}
+                Event::MouseButtonDown { x, y, .. } => {
+                    let (dx, dy) = config.downscale((x, y));
+                    println!("Clicked {:?}, pixel {:?}", (x, y), (dx, dy));
+                    if is_paused && let Some(cell) = gui.world_mut().get_cell_mut((dx, dy)) {
+                        cell.next();
+                        gui.clear_output();
+                        gui.draw()?;
+                    }
+                }
+
                 e => {
                     println!("{e:?}");
                 }

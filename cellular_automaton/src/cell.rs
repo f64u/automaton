@@ -1,1 +1,3 @@
-pub trait BasicCell {}
+pub trait BasicCell {
+    fn next(&mut self);
+}

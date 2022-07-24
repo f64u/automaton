@@ -8,7 +8,18 @@ pub enum Cell {
     Off,
 }
 
-impl BasicCell for Cell {}
+impl BasicCell for Cell {
+    fn next(&mut self) {
+        std::mem::swap(
+            self,
+            &mut match *self {
+                Cell::On => Cell::Dying,
+                Cell::Dying => Cell::Off,
+                Cell::Off => Cell::On,
+            },
+        )
+    }
+}
 
 impl Cell {
     pub fn shoot(&mut self) {

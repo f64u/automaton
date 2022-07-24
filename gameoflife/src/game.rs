@@ -12,7 +12,17 @@ pub enum Cell {
     Dead,
 }
 
-impl BasicCell for Cell {}
+impl BasicCell for Cell {
+    fn next(&mut self) {
+        std::mem::swap(
+            self,
+            &mut match *self {
+                Cell::Alive => Cell::Dead,
+                Cell::Dead => Cell::Alive,
+            },
+        )
+    }
+}
 
 impl Cell {
     pub fn is_alive(&self) -> bool {
