@@ -24,3 +24,9 @@ impl<Field> DerefMut for SizedOutput<Field> {
         &mut self.0
     }
 }
+
+impl<Field> DerefMut for Output<Field> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
