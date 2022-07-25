@@ -218,6 +218,8 @@ where
                             gui.clear_output();
                             gui.draw()?;
                         }
+                    } else {
+                        is_paused = true;
                     }
                 }
 
