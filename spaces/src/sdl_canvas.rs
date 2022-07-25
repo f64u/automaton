@@ -175,6 +175,7 @@ where
                     ..
                 } => {
                     gui.world_mut().refresh_random();
+                    gui.draw()?;
                 }
                 Event::KeyDown {
                     keycode: Some(Keycode::Space),
