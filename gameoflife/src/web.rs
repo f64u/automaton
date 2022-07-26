@@ -1,6 +1,6 @@
 use crate::game::{Cell, World};
 use cellular_automaton::{
-    common::{Dimensions, Representable},
+    common::{Grid, Index, RepresentableAs},
     world::BasicWorld,
 };
 use spaces::wasm_canvas::{Html, WebCell, WebWorld};
@@ -13,7 +13,8 @@ extern "C" {
     fn alert(s: &str);
 }
 
-impl Representable<Html> for Cell {
+impl RepresentableAs<Html> for Cell {
+    type Delta = Html;
     fn represent(&self) -> Html {
         Html {
             value: if self.is_alive() {
@@ -24,23 +25,37 @@ impl Representable<Html> for Cell {
             .into(),
         }
     }
+
+    fn next_frame(&self) -> Self::Delta {
+        self.represent()
+    }
 }
 
 impl WebCell for Cell {}
 
-impl Representable<Html> for World {
-    fn represent(&self) -> Html {
+impl<const W: usize, const H: usize> RepresentableAs<Grid<Html, W, H>> for World<W, H> {
+    type Delta = Vec<(Index, Html)>;
+
+    fn represent(&self) -> Grid<Html, W, H> {
         WebWorld::represent(self)
+    }
+
+    fn next_frame(&self) -> Self::Delta {
+        self.delta_future()
+            .into_iter()
+            .map(|(index, cell)| (index, RepresentableAs::<Html>::represent(&cell)))
+            .collect()
     }
 }
 
-impl WebWorld for World {}
+impl<const W: usize, const H: usize> WebWorld<W, H> for World<W, H> {}
 
 #[wasm_bindgen(js_name = "getState")]
 pub fn get_state() -> String {
     WORLD.with(|w| {
         let world = w.borrow();
-        WebWorld::represent(world.deref()).to_string()
+        WebWorld::represent(world.deref());
+        String::new()
     })
 }
 
@@ -50,5 +65,5 @@ pub fn tick() {
 }
 
 thread_local! {
-    static WORLD: RefCell<World> = RefCell::new(World::new_random(Dimensions(120, 70)));
+    static WORLD: RefCell<World<120, 70>> = RefCell::new(World::new_random());
 }

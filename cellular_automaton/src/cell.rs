@@ -1,3 +1,3 @@
-pub trait BasicCell: Default + Clone {
+pub trait BasicCell: Default + Clone + Copy {
     fn next(&mut self);
 }
