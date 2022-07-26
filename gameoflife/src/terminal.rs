@@ -9,10 +9,9 @@ use crate::game::{Cell, World};
 impl RepresentableAs<char> for Cell {
     type Delta = char;
     fn represent(&self) -> char {
-        if self.is_alive() {
-            '#'
-        } else {
-            ' '
+        match *self {
+            Cell::Alive => '#',
+            Cell::Dead => ' ',
         }
     }
     fn next_frame(&self) -> Self::Delta {

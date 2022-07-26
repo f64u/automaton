@@ -244,7 +244,7 @@ where
                     let (dx, dy) = config.downscale((x as isize, y as isize));
                     if is_paused {
                         let cell = &mut gui.world_mut().cells_mut()[dy][dx];
-                        cell.next();
+                        *cell = cell.next();
                         gui.draw_whole_world()?;
                     } else {
                         is_paused = true;

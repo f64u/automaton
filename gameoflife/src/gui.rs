@@ -7,10 +7,9 @@ use crate::game::{Cell, World};
 impl RepresentableAs<Color> for Cell {
     type Delta = Color;
     fn represent(&self) -> Color {
-        if self.is_alive() {
-            Color::BLACK
-        } else {
-            Color::WHITE
+        match self {
+            Cell::Alive => Color::WHITE,
+            Cell::Dead => Color::BLACK,
         }
     }
 

@@ -1,8 +1,13 @@
-use cellular_automaton::{cell::BasicCell, common::Dimensions, world::BasicWorld};
+use cellular_automaton::{
+    cell::BasicCell,
+    common::{Grid, Index},
+    world::BasicWorld,
+};
+use itertools::Itertools;
 
 pub const PROPORTION: f64 = 0.9;
 
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Copy)]
 pub enum Cell {
     On,
     Dying,
@@ -11,33 +16,16 @@ pub enum Cell {
 }
 
 impl BasicCell for Cell {
-    fn next(&mut self) {
-        std::mem::swap(
-            self,
-            &mut match *self {
-                Cell::On => Cell::Dying,
-                Cell::Dying => Cell::Off,
-                Cell::Off => Cell::On,
-            },
-        )
+    fn next(&self) -> Self {
+        match *self {
+            Cell::On => Cell::Dying,
+            Cell::Dying => Cell::Off,
+            Cell::Off => Cell::On,
+        }
     }
 }
 
-impl Cell {
-    pub fn shoot(&mut self) {
-        *self = Cell::Dying;
-    }
-
-    pub fn kill(&mut self) {
-        *self = Cell::Off;
-    }
-
-    pub fn resurrect(&mut self) {
-        *self = Cell::On;
-    }
-}
-
-pub fn random_cells(dimensions: Dimensions, p: f64) -> impl Iterator<Item = Cell> {
+pub fn random_cells(dimensions: (usize, usize), p: f64) -> impl Iterator<Item = Cell> {
     (0..dimensions.0 * dimensions.1).map(move |_| {
         let x: f64 = rand::random();
         if x < p {
@@ -48,64 +36,63 @@ pub fn random_cells(dimensions: Dimensions, p: f64) -> impl Iterator<Item = Cell
     })
 }
 
-pub struct World {
-    cells: Vec<Cell>,
-    dimensions: Dimensions,
+pub struct World<const W: usize, const H: usize> {
+    cells: Grid<Cell, W, H>,
 }
 
-impl BasicWorld for World {
+impl<const W: usize, const H: usize> BasicWorld<W, H> for World<W, H> {
     type Cell = Cell;
 
-    fn new(dimensions: Dimensions, initial_cells: Vec<Self::Cell>) -> Self {
-        Self {
-            cells: initial_cells,
-            dimensions,
+    fn new(cells: impl Iterator<Item = Self::Cell>) -> Self {
+        let default = Cell::default();
+        let mut acells = [[default; W]; H];
+        for (y, row) in cells.chunks(W).into_iter().enumerate() {
+            for (x, cell) in row.enumerate() {
+                acells[y][x] = cell;
+            }
         }
+        Self { cells: acells }
     }
 
-    fn new_random(dimensions: Dimensions) -> Self {
-        Self::new(dimensions, random_cells(dimensions, PROPORTION).collect())
+    fn new_random() -> Self {
+        Self::new(random_cells((W, H), PROPORTION))
     }
 
     fn refresh_random(&mut self) {
-        *self.cells_mut() = random_cells(self.dimensions(), PROPORTION).collect();
+        *self = Self::new(random_cells((W, H), PROPORTION))
     }
 
-    fn cells(&self) -> &Vec<Self::Cell> {
+    fn cells(&self) -> &Grid<Cell, W, H> {
         &self.cells
     }
 
-    fn cells_mut(&mut self) -> &mut Vec<Self::Cell> {
+    fn cells_mut(&mut self) -> &mut Grid<Cell, W, H> {
         &mut self.cells
     }
 
-    fn dimensions(&self) -> Dimensions {
-        self.dimensions
-    }
+    fn delta_future(&self) -> Vec<(Index, Self::Cell)> {
+        let mut delta = vec![];
 
-    fn next(&self) -> Vec<Self::Cell> {
-        let mut cells: Vec<Cell> = self.cells().iter().map(|c| c.clone()).collect();
-        for i in 0..self.dimensions.0 {
-            for j in 0..self.dimensions.1 {
-                let p = (i as isize, j as isize);
-                let alive = self
-                    .moore_neighbors(p)
-                    .iter()
-                    .filter(|c| match ***c {
-                        Cell::On => true,
-                        _ => false,
-                    })
-                    .count();
-                let cell = &mut cells[self.dimensions().get_index(p).unwrap()];
+        for (i, j) in (0..W).cartesian_product(0..H) {
+            let p = (i as isize, j as isize);
+            let cell = &self.cells()[j][i];
+            let alive = self
+                .moore_neighbors(p)
+                .iter()
+                .filter(|c| match ***c {
+                    Cell::On => true,
+                    _ => false,
+                })
+                .count();
 
-                match *cell {
-                    Cell::Off if alive == 2 => cell.resurrect(),
-                    Cell::Dying => cell.kill(),
-                    Cell::On => cell.shoot(),
-                    _ => {}
-                }
+            match cell {
+                Cell::Off if 2 == alive => delta.push(((i, j), cell.next())),
+                Cell::Dying => delta.push(((i, j), cell.next())),
+                Cell::On => delta.push(((i, j), cell.next())),
+                _ => {}
             }
         }
-        cells
+
+        delta
     }
 }

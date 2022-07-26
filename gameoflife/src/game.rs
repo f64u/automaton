@@ -16,22 +16,10 @@ pub enum Cell {
 }
 
 impl BasicCell for Cell {
-    fn next(&mut self) {
-        std::mem::swap(
-            self,
-            &mut match *self {
-                Cell::Alive => Cell::Dead,
-                Cell::Dead => Cell::Alive,
-            },
-        )
-    }
-}
-
-impl Cell {
-    pub fn is_alive(&self) -> bool {
+    fn next(&self) -> Self {
         match *self {
-            Cell::Alive => true,
-            _ => false,
+            Cell::Alive => Cell::Dead,
+            Cell::Dead => Cell::Alive,
         }
     }
 }
@@ -104,7 +92,10 @@ impl<const W: usize, const H: usize> World<W, H> {
     fn count_alive_neighbors(&self, p: Position) -> usize {
         self.moore_neighbors(p)
             .iter()
-            .filter(|c| c.is_alive())
+            .filter(|c| match ***c {
+                Cell::Alive => true,
+                _ => false,
+            })
             .count()
     }
 }

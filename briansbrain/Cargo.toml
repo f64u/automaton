@@ -7,9 +7,10 @@ version = "0.1.0"
 
 [dependencies]
 cellular_automaton = {path = "../cellular_automaton"}
+itertools = "0.10.3"
 rand = "0.8.5"
 sdl2 = {version = "0.35.2", optional = true}
 spaces = {path = "../spaces"}
 
 [features]
-sdl2 = ["dep:sdl2"]
+sdl2 = ["dep:sdl2", "spaces/sdl2"]

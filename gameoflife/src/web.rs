@@ -17,12 +17,13 @@ impl RepresentableAs<Html> for Cell {
     type Delta = Html;
     fn represent(&self) -> Html {
         Html {
-            value: if self.is_alive() {
-                "<span class=\"alive\"></span>"
-            } else {
-                "<span class=\"dead\"></span>"
-            }
-            .into(),
+            value: format!(
+                "<span class=\"{}\"></span>",
+                match *self {
+                    Cell::Alive => "alive",
+                    Cell::Dead => "dead",
+                }
+            ),
         }
     }
 
