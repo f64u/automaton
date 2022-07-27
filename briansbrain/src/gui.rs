@@ -26,7 +26,7 @@ pub(crate) fn run() -> Result<(), String> {
     let config = Config::new((WINDOW_W as u32, WINDOW_H as u32), PIXEL_SIZE as usize, 100);
     let mut rng = rand::thread_rng();
     let world = World::random(&mut rng, Dimensions(W, H));
-    sdl2_canvas::run(config, world, "Game of Life")?;
+    sdl2_canvas::run(config, world, "Brians Brain")?;
 
     Ok(())
 }
