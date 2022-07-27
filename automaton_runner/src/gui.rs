@@ -6,16 +6,19 @@ use spaces::sdl2_canvas::{self, Config};
 
 use crate::worlds::Worlds;
 
-pub fn run(world: Worlds) -> Result<(), String> {
-    let window_dimensions = Dimensions(1200, 700);
-    let pixel_size = 20;
+pub fn run(
+    world: Worlds,
+    window_dimensions: Dimensions,
+    pixel_size: usize,
+    update_millis: usize,
+) -> Result<(), String> {
     let world_dimenions = Dimensions(
         window_dimensions.0 / pixel_size,
         window_dimensions.1 / pixel_size,
     );
 
     let mut rng = rand::thread_rng();
-    let config = Config::new(window_dimensions, pixel_size, 100);
+    let config = Config::new(window_dimensions, pixel_size, update_millis as u64);
 
     match world {
         Worlds::GameOfLife => {

@@ -66,7 +66,7 @@ where
     }
 }
 
-pub fn run<W, C, F>(world: W, repr: F) -> Result<(), String>
+pub fn run<W, C, F>(world: W, repr: F, update_millis: usize) -> Result<(), String>
 where
     W: BasicWorld<C> + Send + 'static,
     C: BasicCell + Send + 'static,
@@ -107,7 +107,7 @@ where
 
     std::thread::spawn(move || loop {
         let _ = canvas.tick_delta(&repr);
-        std::thread::sleep(Duration::from_millis(100));
+        std::thread::sleep(Duration::from_millis(update_millis as u64));
     });
 
     siv.run();

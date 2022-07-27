@@ -1,3 +1,6 @@
+use crate::worlds::{FrontEnds, Worlds};
+use clap::Parser;
+
 #[cfg(feature = "sdl2")]
 mod gui;
 #[cfg(feature = "cursive")]
@@ -7,21 +10,46 @@ mod web;
 
 mod worlds;
 
+#[derive(Parser, Debug)]
+#[clap(author, version, about, long_about = None)]
+struct Args {
+    #[clap(short, long, value_parser, default_value_t = 1200)]
+    width: usize,
+
+    #[clap(short, long, value_parser, default_value_t = 700)]
+    height: usize,
+
+    #[clap(short, long, value_parser, default_value_t = 20)]
+    pixel_size: usize,
+
+    #[clap(short, long, value_parser, default_value_t = 100)]
+    update_millis: usize,
+
+    #[clap(short, long, default_value_t = Worlds::GameOfLife)]
+    game: Worlds,
+
+    #[clap(short, long, default_value_t = FrontEnds::Sdl2)]
+    frontend: FrontEnds,
+}
+
 #[cfg(all(feature = "sdl2", feature = "cursive"))]
 fn main() -> Result<(), String> {
-    let args: Vec<_> = std::env::args().skip(1).collect();
-    if args.len() < 2 {
-        return Err("don't work like that".into());
-    }
-    match (&args[0][..], &args[1][..]) {
-        ("terminal", "gof") => terminal::run(worlds::Worlds::GameOfLife),
-        ("terminal", "bb") => terminal::run(worlds::Worlds::BriansBrain),
-        ("gui", "gof") => gui::run(worlds::Worlds::GameOfLife),
-        ("gui", "bb") => gui::run(worlds::Worlds::BriansBrain),
+    use cellular_automaton::common::Dimensions;
 
-        _ => {
-            return Err("can't understand".into());
-        }
+    let args = Args::parse();
+
+    match args.frontend {
+        FrontEnds::Curisve => terminal::run(
+            args.game,
+            Dimensions(args.width, args.height),
+            args.update_millis,
+        ),
+        FrontEnds::Sdl2 => gui::run(
+            worlds::Worlds::BriansBrain,
+            Dimensions(args.width, args.height),
+            args.pixel_size,
+            args.update_millis,
+        ),
     }
 }
 
