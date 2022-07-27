@@ -34,5 +34,5 @@ pub fn tick() {
 }
 
 thread_local! {
-    static WORLD: RefCell<World<Cell>> = RefCell::new(World::random(&mut rand::thread_rng(), Dimensions(120, 70)));
+    static WORLD: RefCell<World> = RefCell::new(World::random(&mut rand::thread_rng(), Dimensions(120, 70)));
 }

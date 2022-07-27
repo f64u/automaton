@@ -33,25 +33,16 @@ impl BasicCell for Cell {
     }
 }
 
-pub struct World<Cell> {
+pub struct World {
     cells: DoubleVec<Cell>,
     dimensions: Dimensions,
     delta: Vec<(Index, Cell)>,
 }
 
-impl BasicWorld<Cell> for World<Cell> {
-    fn random<R: rand::Rng + ?Sized>(rng: &mut R, dimensions: Dimensions) -> Self {
-        let cells = (0..dimensions.0 * dimensions.1)
-            .chunks(dimensions.0)
-            .into_iter()
-            .map(|chunk| chunk.map(|_| Cell::random(rng)).collect())
-            .collect();
-        World::new(cells, dimensions)
-    }
-
+impl BasicWorld<Cell> for World {
     fn new(cells: DoubleVec<Cell>, dimensions: Dimensions) -> Self {
         let clone = cells.clone();
-        World {
+        Self {
             cells,
             dimensions,
             delta: clone

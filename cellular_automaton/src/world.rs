@@ -8,8 +8,16 @@ use crate::{
 pub trait BasicWorld<C>
 where
     C: BasicCell,
+    Self: Sized,
 {
-    fn random<R: rand::Rng + ?Sized>(rng: &mut R, dimensions: Dimensions) -> Self;
+    fn random<R: rand::Rng + ?Sized>(rng: &mut R, dimensions: Dimensions) -> Self {
+        let cells = (0..dimensions.0 * dimensions.1)
+            .chunks(dimensions.0)
+            .into_iter()
+            .map(|chunk| chunk.map(|_| C::random(rng)).collect())
+            .collect();
+        Self::new(cells, dimensions)
+    }
     fn new(cells: DoubleVec<C>, dimensions: Dimensions) -> Self;
 
     fn cells(&self) -> &DoubleVec<C>;

@@ -1,6 +1,6 @@
 use cellular_automaton::{
     cell::BasicCell,
-    common::{Grid, Index},
+    common::{Dimensions, DoubleVec, Index},
     world::BasicWorld,
 };
 use itertools::Itertools;
@@ -23,57 +23,27 @@ impl BasicCell for Cell {
             Cell::Off => Cell::On,
         }
     }
-}
-
-pub fn random_cells(dimensions: (usize, usize), p: f64) -> impl Iterator<Item = Cell> {
-    (0..dimensions.0 * dimensions.1).map(move |_| {
-        let x: f64 = rand::random();
-        if x < p {
+    fn random<R: rand::Rng + ?Sized>(rng: &mut R) -> Self {
+        let x: f64 = rng.gen();
+        if x < PROPORTION {
             Cell::Off
         } else {
             Cell::On
         }
-    })
+    }
 }
 
-pub struct World<const W: usize, const H: usize> {
-    cells: Grid<Cell, W, H>,
+pub struct World {
+    cells: DoubleVec<Cell>,
+    dimensions: Dimensions,
+    delta: Vec<(Index, Cell)>,
 }
 
-impl<const W: usize, const H: usize> BasicWorld<W, H> for World<W, H> {
-    type Cell = Cell;
-
-    fn new(cells: impl Iterator<Item = Self::Cell>) -> Self {
-        let default = Cell::default();
-        let mut acells = [[default; W]; H];
-        for (y, row) in cells.chunks(W).into_iter().enumerate() {
-            for (x, cell) in row.enumerate() {
-                acells[y][x] = cell;
-            }
-        }
-        Self { cells: acells }
-    }
-
-    fn new_random() -> Self {
-        Self::new(random_cells((W, H), PROPORTION))
-    }
-
-    fn refresh_random(&mut self) {
-        *self = Self::new(random_cells((W, H), PROPORTION))
-    }
-
-    fn cells(&self) -> &Grid<Cell, W, H> {
-        &self.cells
-    }
-
-    fn cells_mut(&mut self) -> &mut Grid<Cell, W, H> {
-        &mut self.cells
-    }
-
-    fn delta_future(&self) -> Vec<(Index, Self::Cell)> {
+impl BasicWorld<Cell> for World {
+    fn changes(&self) -> Vec<(Index, Cell)> {
         let mut delta = vec![];
 
-        for (i, j) in (0..W).cartesian_product(0..H) {
+        for (i, j) in (0..self.dimensions().0).cartesian_product(0..self.dimensions().1) {
             let p = (i as isize, j as isize);
             let cell = &self.cells()[j][i];
             let alive = self
@@ -94,5 +64,42 @@ impl<const W: usize, const H: usize> BasicWorld<W, H> for World<W, H> {
         }
 
         delta
+    }
+
+    fn new(cells: DoubleVec<Cell>, dimensions: Dimensions) -> Self {
+        let clone = cells.clone();
+        Self {
+            cells,
+            dimensions,
+            delta: clone
+                .into_iter()
+                .enumerate()
+                .flat_map(|(j, row)| {
+                    row.into_iter()
+                        .enumerate()
+                        .map(move |(i, cell)| ((i, j), cell))
+                })
+                .collect(),
+        }
+    }
+
+    fn cells(&self) -> &DoubleVec<Cell> {
+        &self.cells
+    }
+
+    fn cells_mut(&mut self) -> &mut DoubleVec<Cell> {
+        &mut self.cells
+    }
+
+    fn delta(&self) -> &Vec<(Index, Cell)> {
+        &self.delta
+    }
+
+    fn delta_mut(&mut self) -> &mut Vec<(Index, Cell)> {
+        &mut self.delta
+    }
+
+    fn dimensions(&self) -> Dimensions {
+        self.dimensions
     }
 }
