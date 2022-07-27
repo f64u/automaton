@@ -5,4 +5,5 @@ members = [
   "cellular_automaton",
   "spaces",
   "briansbrain",
+  "automaton_runner",
 ]

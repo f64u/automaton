@@ -1,6 +1,6 @@
 use crate::{
     cell::BasicCell,
-    common::{DoubleVec, Index, Repr},
+    common::{DoubleVec, Index},
     world::BasicWorld,
 };
 
@@ -9,7 +9,7 @@ use crate::{
 
 pub trait Space<W, C, O>
 where
-    C: BasicCell + Repr<Self::CellRepr>,
+    C: BasicCell,
     W: BasicWorld<C>,
     O: OutputField<C, Self::CellRepr>,
 {
@@ -19,38 +19,48 @@ where
     fn world(&self) -> &W;
     fn output_mut(&mut self) -> &mut O;
 
-    fn draw_whole(&mut self) -> Result<(), String> {
+    fn draw_whole<F>(&mut self, repr: F) -> Result<(), String>
+    where
+        F: Fn(C) -> Self::CellRepr,
+    {
         let data = self
             .world()
             .cells()
             .iter()
-            .map(|row| row.iter().map(|cell| cell.repr()).collect())
+            .map(|row| row.iter().map(|cell| repr(*cell)).collect())
             .collect();
         self.output_mut().set_all(data)
     }
 
-    fn draw_delta(&mut self) -> Result<(), String> {
+    fn draw_delta<F>(&mut self, repr: F) -> Result<(), String>
+    where
+        F: Fn(C) -> Self::CellRepr,
+    {
         let changes = self.world().delta().clone();
-        let next = changes
-            .into_iter()
-            .map(|(index, cell)| (index, cell.repr()));
+        let next = changes.into_iter().map(|(index, cell)| (index, repr(cell)));
         self.output_mut().update(next)
     }
 
-    fn tick_whole(&mut self) -> Result<(), String> {
+    fn tick_whole<F>(&mut self, repr: F) -> Result<(), String>
+    where
+        F: Fn(C) -> Self::CellRepr,
+    {
         self.world_mut().tick();
-        self.draw_whole()
+        self.draw_whole(repr)
     }
 
-    fn tick_delta(&mut self) -> Result<(), String> {
+    fn tick_delta<F>(&mut self, repr: F) -> Result<(), String>
+    where
+        F: Fn(C) -> Self::CellRepr,
+    {
         self.world_mut().tick();
-        self.draw_delta()
+        self.draw_delta(repr)
     }
 }
 
 pub trait OutputField<C, S>
 where
-    C: BasicCell + Repr<S>,
+    C: BasicCell,
 {
     fn set_unit(&mut self, index: Index, unit: S, refresh: bool) -> Result<(), String>;
     fn show(&mut self);

@@ -2,7 +2,7 @@ use std::{marker::PhantomData, time::Duration};
 
 use cellular_automaton::{
     cell::BasicCell,
-    common::{Index, Repr, ScreenPosition},
+    common::{Dimensions, Index, ScreenPosition},
     space::{OutputField, Space},
     world::BasicWorld,
 };
@@ -13,13 +13,13 @@ use sdl2::{
 use crate::common::OutputManager;
 
 pub struct Config {
-    pub dimensions: (u32, u32), // dimensions of window
+    pub dimensions: Dimensions, // dimensions of window
     pub pixel_size: usize,
     pub millis: u64,
 }
 
 impl Config {
-    pub fn new(dimensions: (u32, u32), pixel_size: usize, millis: u64) -> Self {
+    pub fn new(dimensions: Dimensions, pixel_size: usize, millis: u64) -> Self {
         Self {
             dimensions,
             pixel_size,
@@ -44,7 +44,7 @@ type Out<'a> = OutputManager<&'a mut Canvas<Window>>;
 
 impl<'a, C> OutputField<C, Color> for Out<'a>
 where
-    C: BasicCell + Repr<Color>,
+    C: BasicCell,
 {
     fn set_unit(&mut self, (x, y): Index, unit: Color, refresh: bool) -> Result<(), String> {
         let rect = Rect::new(
@@ -81,7 +81,7 @@ where
 
 impl<'a, W, C> Space<W, C, Out<'a>> for Gui<'a, W, C>
 where
-    C: BasicCell + Repr<Color>,
+    C: BasicCell,
     W: BasicWorld<C>,
 {
     type CellRepr = Color;
@@ -100,7 +100,7 @@ where
 
 impl<'a, W, C> Gui<'a, W, C>
 where
-    C: BasicCell + Repr<Color>,
+    C: BasicCell,
     W: BasicWorld<C>,
 {
     fn new(world: W, output: Out<'a>) -> Self {
@@ -118,10 +118,11 @@ where
     }
 }
 
-pub fn run<W, C>(config: Config, world: W, title: &str) -> Result<(), String>
+pub fn run<W, C, F>(config: Config, world: W, title: &str, repr: F) -> Result<(), String>
 where
-    C: BasicCell + Repr<Color>,
+    C: BasicCell,
     W: BasicWorld<C>,
+    F: Fn(C) -> Color,
 {
     let mut millis = config.millis;
 
@@ -147,7 +148,7 @@ where
 
     let mut gui = Gui::new(world, output);
     gui.clear_output();
-    gui.draw_whole()?;
+    gui.draw_whole(&repr)?;
 
     let mut event_dump = sdl_context.event_pump()?;
 
@@ -172,7 +173,7 @@ where
                     let d = gui.world().dimensions();
                     let mut rng = rand::thread_rng();
                     *gui.world_mut() = W::random(&mut rng, d);
-                    gui.draw_whole()?;
+                    gui.draw_whole(&repr)?;
                 }
                 Event::KeyDown {
                     keycode: Some(Keycode::Space),
@@ -197,7 +198,7 @@ where
                     ..
                 } => {
                     if is_paused {
-                        gui.tick_whole()?
+                        gui.tick_whole(&repr)?
                     }
                 }
 
@@ -206,14 +207,14 @@ where
                     ..
                 } => {
                     gui.world_mut().blank();
-                    gui.draw_whole()?;
+                    gui.draw_whole(&repr)?;
                 }
                 Event::MouseButtonDown { x, y, .. } => {
                     let (dx, dy) = config.downscale((x as isize, y as isize));
                     if is_paused {
                         let cell = &mut gui.world_mut().cells_mut()[dy][dx];
                         *cell = cell.next_state();
-                        gui.draw_whole()?
+                        gui.draw_whole(&repr)?
                     } else {
                         is_paused = true;
                     }
@@ -224,7 +225,7 @@ where
         }
 
         if !is_paused {
-            gui.tick_whole()?
+            gui.tick_whole(&repr)?
         }
 
         std::thread::sleep(Duration::from_millis(millis));

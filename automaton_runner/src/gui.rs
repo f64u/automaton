@@ -1,0 +1,39 @@
+use briansbrain::{cell::Cell as BrainCell, world::World as BrainWorld};
+use cellular_automaton::{common::Dimensions, world::BasicWorld};
+use gameoflife::{cell::Cell as LifeCell, world::World as LifeWorld};
+use sdl2::pixels::Color;
+use spaces::sdl2_canvas::{self, Config};
+
+use crate::worlds::Worlds;
+
+pub fn run(world: Worlds) -> Result<(), String> {
+    let window_dimensions = Dimensions(1200, 700);
+    let pixel_size = 20;
+    let world_dimenions = Dimensions(
+        window_dimensions.0 / pixel_size,
+        window_dimensions.1 / pixel_size,
+    );
+
+    let mut rng = rand::thread_rng();
+    let config = Config::new(window_dimensions, pixel_size, 100);
+
+    match world {
+        Worlds::GameOfLife => {
+            let world = LifeWorld::random(&mut rng, world_dimenions);
+            sdl2_canvas::run(config, world, "Game of Life", |c| match c {
+                LifeCell::Alive => Color::WHITE,
+                LifeCell::Dead => Color::BLACK,
+            })?;
+        }
+        Worlds::BriansBrain => {
+            let world = BrainWorld::random(&mut rng, world_dimenions);
+            sdl2_canvas::run(config, world, "Brian's Brian", |c| match c {
+                BrainCell::On => Color::WHITE,
+                BrainCell::Dying => Color::BLUE,
+                BrainCell::Off => Color::BLACK,
+            })?;
+        }
+    }
+
+    Ok(())
+}

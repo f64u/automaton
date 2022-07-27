@@ -2,7 +2,7 @@ use std::{marker::PhantomData, time::Duration};
 
 use cellular_automaton::{
     cell::BasicCell,
-    common::{DoubleVec, Index, Repr},
+    common::{DoubleVec, Index},
     space::{OutputField, Space},
     world::BasicWorld,
 };
@@ -14,7 +14,7 @@ type Out = OutputManager<DoubleVec<TextContent>>;
 
 impl<C> OutputField<C, char> for Out
 where
-    C: BasicCell + Repr<char>,
+    C: BasicCell,
 {
     fn set_unit(&mut self, (x, y): Index, unit: char, _refresh: bool) -> Result<(), String> {
         self.field[y][x].set_content(unit);
@@ -35,7 +35,7 @@ where
 
 impl<W, C> Space<W, C, Out> for Terminal<W, C>
 where
-    C: BasicCell + Repr<char>,
+    C: BasicCell,
     W: BasicWorld<C>,
 {
     type CellRepr = char;
@@ -66,10 +66,11 @@ where
     }
 }
 
-pub fn run<W, C>(world: W) -> Result<(), String>
+pub fn run<W, C, F>(world: W, repr: F) -> Result<(), String>
 where
-    W: BasicWorld<C> + std::marker::Send + 'static,
-    C: BasicCell + Repr<char> + std::marker::Send + 'static,
+    W: BasicWorld<C> + Send + 'static,
+    C: BasicCell + Send + 'static,
+    F: Fn(C) -> char + Send + 'static,
 {
     let mut siv = cursive::default();
     siv.set_autorefresh(true);
@@ -102,10 +103,10 @@ where
         },
     );
     siv.add_global_callback('q', |s| s.quit());
-    canvas.draw_whole()?;
+    canvas.draw_whole(&repr)?;
 
     std::thread::spawn(move || loop {
-        let _ = canvas.tick_delta();
+        let _ = canvas.tick_delta(&repr);
         std::thread::sleep(Duration::from_millis(100));
     });
 

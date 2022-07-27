@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use cellular_automaton::{
     cell::BasicCell,
-    common::{DoubleVec, Index, Repr},
+    common::{DoubleVec, Index},
     space::{OutputField, Space},
     world::BasicWorld,
 };
@@ -23,7 +23,7 @@ type Out = OutputManager<DoubleVec<Html>>;
 
 impl<C> OutputField<C, Html> for Out
 where
-    C: BasicCell + Repr<Html>,
+    C: BasicCell,
 {
     fn set_unit(&mut self, (x, y): Index, unit: Html, _refresh: bool) -> Result<(), String> {
         self.field[y][x] = unit;
@@ -45,7 +45,7 @@ where
 
 impl<'a, W, C> Space<W, C, Out> for Browser<W, C>
 where
-    C: BasicCell + Repr<Html>,
+    C: BasicCell,
     W: BasicWorld<C>,
 {
     type CellRepr = Html;
