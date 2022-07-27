@@ -1,93 +1,83 @@
-use std::time::Duration;
+use std::{marker::PhantomData, time::Duration};
 
 use cellular_automaton::{
     cell::BasicCell,
-    common::{Grid, Index, RepresentableAs},
+    common::{DoubleVec, Index, Repr},
     space::{OutputField, Space},
     world::BasicWorld,
 };
 use cursive::views::{LinearLayout, TextContent, TextView};
 
-use crate::common::Output;
+use crate::common::OutputManager;
 
-pub trait CharCell: BasicCell + RepresentableAs<char> {}
+type Out = OutputManager<DoubleVec<TextContent>>;
 
-pub trait StringWorld<const W: usize, const H: usize>:
-    BasicWorld<W, H> + RepresentableAs<Grid<char, W, H>, Delta = Vec<(Index, char)>>
+impl<C> OutputField<C, char> for Out
 where
-    Self::Cell: CharCell,
+    C: BasicCell + Repr<char>,
 {
-    fn represent(&self) -> Grid<char, W, H> {
-        let mut grid = [[char::default(); W]; H];
-        for (y, row) in self.cells().iter().enumerate() {
-            for (x, cell) in row.iter().enumerate() {
-                grid[y][x] = cell.represent()
-            }
-        }
-
-        grid
-    }
-}
-
-pub type OutputContent<const W: usize, const H: usize> = Output<Grid<TextContent, W, H>>;
-
-struct Terminal<World, const W: usize, const H: usize>
-where
-    World: StringWorld<W, H>,
-    World::Cell: CharCell,
-{
-    world: World,
-    output: OutputContent<W, H>,
-}
-
-impl<World, const W: usize, const H: usize> Space<World, OutputContent<W, H>, char, W, H>
-    for Terminal<World, W, H>
-where
-    World: StringWorld<W, H, Delta = Vec<(Index, char)>>,
-    World::Cell: CharCell,
-{
-    fn world_mut(&mut self) -> &mut World {
-        &mut self.world
-    }
-
-    fn world(&self) -> &World {
-        &self.world
-    }
-
-    fn output_mut(&mut self) -> &mut OutputContent<W, H> {
-        &mut self.output
-    }
-}
-
-impl<'a, World, const W: usize, const H: usize> Terminal<World, W, H>
-where
-    World: StringWorld<W, H>,
-    World::Cell: CharCell,
-{
-    fn new(world: World, output: OutputContent<W, H>) -> Self {
-        Self { world, output }
-    }
-}
-
-impl<const W: usize, const H: usize> OutputField<W, H> for OutputContent<W, H> {
-    type Unit = char;
-
-    fn set_unit(&mut self, (x, y): Index, unit: Self::Unit, _refresh: bool) -> Result<(), String> {
+    fn set_unit(&mut self, (x, y): Index, unit: char, _refresh: bool) -> Result<(), String> {
         self.field[y][x].set_content(unit);
         Ok(())
     }
     fn show(&mut self) {}
 }
 
-pub fn run<World, const W: usize, const H: usize>(world: World) -> Result<(), String>
+struct Terminal<W, C>
 where
-    World: StringWorld<W, H> + std::marker::Send + 'static,
-    World::Cell: CharCell,
+    W: BasicWorld<C>,
+    C: BasicCell,
+{
+    world: W,
+    output: Out,
+    _cell: PhantomData<C>,
+}
+
+impl<W, C> Space<W, C, Out> for Terminal<W, C>
+where
+    C: BasicCell + Repr<char>,
+    W: BasicWorld<C>,
+{
+    type CellRepr = char;
+    fn world_mut(&mut self) -> &mut W {
+        &mut self.world
+    }
+
+    fn world(&self) -> &W {
+        &self.world
+    }
+
+    fn output_mut(&mut self) -> &mut Out {
+        &mut self.output
+    }
+}
+
+impl<W, C> Terminal<W, C>
+where
+    W: BasicWorld<C>,
+    C: BasicCell,
+{
+    fn new(world: W, output: Out) -> Self {
+        Self {
+            world,
+            output,
+            _cell: PhantomData,
+        }
+    }
+}
+
+pub fn run<W, C>(world: W) -> Result<(), String>
+where
+    W: BasicWorld<C> + std::marker::Send + 'static,
+    C: BasicCell + Repr<char> + std::marker::Send + 'static,
 {
     let mut siv = cursive::default();
     siv.set_autorefresh(true);
 
-    let texts = [[(); W]; H].map(|r| r.map(|_| TextContent::new("")));
+    let texts: Vec<Vec<TextContent>> = vec![vec![(); world.dimensions().0]; world.dimensions().1]
+        .into_iter()
+        .map(|r| r.into_iter().map(|_| TextContent::new("")).collect())
+        .collect();
     let textboxes = texts.iter().map(|row| {
         let mut layout_row = LinearLayout::horizontal();
         for child in row
@@ -106,17 +96,16 @@ where
 
     let mut canvas = Terminal::new(
         world,
-        Output {
+        OutputManager {
             field: texts,
             pixel_size: 1,
         },
     );
     siv.add_global_callback('q', |s| s.quit());
-    canvas.draw_whole_world();
+    canvas.draw_whole()?;
 
     std::thread::spawn(move || loop {
-        let _ = canvas.draw_delta();
-        canvas.world_mut().tick();
+        let _ = canvas.tick_delta();
         std::thread::sleep(Duration::from_millis(100));
     });
 

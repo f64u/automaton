@@ -1,8 +1,8 @@
-use std::time::Duration;
+use std::{marker::PhantomData, time::Duration};
 
 use cellular_automaton::{
     cell::BasicCell,
-    common::{Grid, Index, Position, RepresentableAs},
+    common::{Index, Repr, ScreenPosition},
     space::{OutputField, Space},
     world::BasicWorld,
 };
@@ -10,7 +10,7 @@ use sdl2::{
     event::Event, keyboard::Keycode, pixels::Color, rect::Rect, render::Canvas, video::Window,
 };
 
-use crate::common::Output;
+use crate::common::OutputManager;
 
 pub struct Config {
     pub dimensions: (u32, u32), // dimensions of window
@@ -35,92 +35,18 @@ impl Config {
         self.dimensions.1 as usize / self.pixel_size
     }
 
-    pub fn downscale(&self, (x, y): Position) -> Index {
+    pub fn downscale(&self, (x, y): ScreenPosition) -> Index {
         (x as usize / self.pixel_size, y as usize / self.pixel_size)
     }
 }
 
-pub trait ColoredCell: BasicCell + RepresentableAs<Color, Delta = Color> {
-    fn next_frame(&self) -> Self::Delta {
-        RepresentableAs::<Self::Delta>::represent(self)
-    }
-}
+type Out<'a> = OutputManager<&'a mut Canvas<Window>>;
 
-pub type RepresentedWorld<const W: usize, const H: usize> = Grid<Color, W, H>;
-pub type FutureWorld = Vec<(Index, Color)>;
-
-pub trait ColoredWorld<const W: usize, const H: usize>:
-    BasicWorld<W, H> + RepresentableAs<RepresentedWorld<W, H>, Delta = FutureWorld>
+impl<'a, C> OutputField<C, Color> for Out<'a>
 where
-    Self::Cell: ColoredCell,
+    C: BasicCell + Repr<Color>,
 {
-    fn represent(&self) -> RepresentedWorld<W, H> {
-        let mut grid = [[Color::WHITE; W]; H];
-        for (y, row) in self.cells().iter().enumerate() {
-            for (x, cell) in row.iter().enumerate() {
-                grid[y][x] = cell.represent()
-            }
-        }
-
-        grid
-    }
-
-    fn next_frame(&self) -> FutureWorld {
-        self.delta_future()
-            .into_iter()
-            .map(|(index, cell)| (index, cell.represent()))
-            .collect()
-    }
-}
-
-struct Gui<'a, World, const W: usize, const H: usize>
-where
-    World: ColoredWorld<W, H>,
-    World::Cell: ColoredCell,
-{
-    world: World,
-    output: Output<&'a mut Canvas<Window>>,
-}
-
-impl<'a, World, const W: usize, const H: usize>
-    Space<World, Output<&'a mut Canvas<Window>>, Color, W, H> for Gui<'a, World, W, H>
-where
-    World: ColoredWorld<W, H> + RepresentableAs<RepresentedWorld<W, H>>,
-    World::Cell: ColoredCell,
-{
-    fn world_mut(&mut self) -> &mut World {
-        &mut self.world
-    }
-
-    fn world(&self) -> &World {
-        &self.world
-    }
-
-    fn output_mut(&mut self) -> &mut Output<&'a mut Canvas<Window>> {
-        &mut self.output
-    }
-}
-
-impl<'a, World, const W: usize, const H: usize> Gui<'a, World, W, H>
-where
-    World: ColoredWorld<W, H>,
-    World::Cell: ColoredCell,
-{
-    fn new(world: World, output: Output<&'a mut Canvas<Window>>) -> Self {
-        Gui { world, output }
-    }
-
-    fn clear_output(&mut self) {
-        self.output_mut().field.set_draw_color(Color::WHITE);
-        self.output_mut().field.clear();
-        self.output_mut().field.present();
-    }
-}
-
-impl<'a, const W: usize, const H: usize> OutputField<W, H> for Output<&'a mut Canvas<Window>> {
-    type Unit = Color;
-
-    fn set_unit(&mut self, (x, y): Index, unit: Self::Unit, refresh: bool) -> Result<(), String> {
+    fn set_unit(&mut self, (x, y): Index, unit: Color, refresh: bool) -> Result<(), String> {
         let rect = Rect::new(
             (x * self.pixel_size) as i32,
             (y * self.pixel_size) as i32,
@@ -132,7 +58,7 @@ impl<'a, const W: usize, const H: usize> OutputField<W, H> for Output<&'a mut Ca
         self.field.fill_rect(rect)?;
 
         if refresh {
-            OutputField::<W, H>::show(self)
+            OutputField::<C, Color>::show(self)
         }
 
         Ok(())
@@ -143,18 +69,60 @@ impl<'a, const W: usize, const H: usize> OutputField<W, H> for Output<&'a mut Ca
     }
 }
 
-pub fn run<World, const W: usize, const H: usize>(
-    config: Config,
-    world: World,
-    title: &str,
-) -> Result<(), String>
+struct Gui<'a, W, C>
 where
-    World: ColoredWorld<W, H>,
-    World::Cell: ColoredCell,
+    C: BasicCell,
+    W: BasicWorld<C>,
 {
-    assert_eq!(config.pixel_count_x(), W);
-    assert_eq!(config.pixel_count_y(), H);
+    world: W,
+    output: Out<'a>,
+    _data: PhantomData<C>,
+}
 
+impl<'a, W, C> Space<W, C, Out<'a>> for Gui<'a, W, C>
+where
+    C: BasicCell + Repr<Color>,
+    W: BasicWorld<C>,
+{
+    type CellRepr = Color;
+    fn world_mut(&mut self) -> &mut W {
+        &mut self.world
+    }
+
+    fn world(&self) -> &W {
+        &self.world
+    }
+
+    fn output_mut(&mut self) -> &mut Out<'a> {
+        &mut self.output
+    }
+}
+
+impl<'a, W, C> Gui<'a, W, C>
+where
+    C: BasicCell + Repr<Color>,
+    W: BasicWorld<C>,
+{
+    fn new(world: W, output: Out<'a>) -> Self {
+        Gui {
+            world,
+            output,
+            _data: PhantomData,
+        }
+    }
+
+    fn clear_output(&mut self) {
+        self.output_mut().field.set_draw_color(Color::WHITE);
+        self.output_mut().field.clear();
+        self.output_mut().field.present();
+    }
+}
+
+pub fn run<W, C>(config: Config, world: W, title: &str) -> Result<(), String>
+where
+    C: BasicCell + Repr<Color>,
+    W: BasicWorld<C>,
+{
     let mut millis = config.millis;
 
     let sdl_context = sdl2::init().unwrap();
@@ -172,14 +140,14 @@ where
         .map_err(|s| s.to_string())?;
 
     let mut canvas = window.into_canvas().build().map_err(|s| s.to_string())?;
-    let output = Output {
+    let output = OutputManager {
         field: &mut canvas,
         pixel_size: config.pixel_size,
     };
 
     let mut gui = Gui::new(world, output);
     gui.clear_output();
-    gui.draw_whole_world()?;
+    gui.draw_whole()?;
 
     let mut event_dump = sdl_context.event_pump()?;
 
@@ -201,9 +169,10 @@ where
                     keycode: Some(Keycode::R),
                     ..
                 } => {
-                    gui.clear_output();
-                    gui.world_mut().refresh_random();
-                    gui.draw_whole_world()?;
+                    let d = gui.world().dimensions();
+                    let mut rng = rand::thread_rng();
+                    *gui.world_mut() = W::random(&mut rng, d);
+                    gui.draw_whole()?;
                 }
                 Event::KeyDown {
                     keycode: Some(Keycode::Space),
@@ -228,8 +197,7 @@ where
                     ..
                 } => {
                     if is_paused {
-                        gui.world_mut().tick();
-                        gui.draw_whole_world()?;
+                        gui.tick_whole()?
                     }
                 }
 
@@ -238,14 +206,14 @@ where
                     ..
                 } => {
                     gui.world_mut().blank();
-                    gui.draw_whole_world()?;
+                    gui.draw_whole()?;
                 }
                 Event::MouseButtonDown { x, y, .. } => {
                     let (dx, dy) = config.downscale((x as isize, y as isize));
                     if is_paused {
                         let cell = &mut gui.world_mut().cells_mut()[dy][dx];
-                        *cell = cell.next();
-                        gui.draw_whole_world()?;
+                        *cell = cell.next_state();
+                        gui.draw_whole()?
                     } else {
                         is_paused = true;
                     }
@@ -256,8 +224,7 @@ where
         }
 
         if !is_paused {
-            gui.world_mut().tick();
-            gui.draw_whole_world()?;
+            gui.tick_whole()?
         }
 
         std::thread::sleep(Duration::from_millis(millis));

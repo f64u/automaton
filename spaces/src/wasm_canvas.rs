@@ -1,11 +1,13 @@
+use std::marker::PhantomData;
+
 use cellular_automaton::{
     cell::BasicCell,
-    common::{Grid, Index, RepresentableAs},
+    common::{DoubleVec, Index, Repr},
     space::{OutputField, Space},
     world::BasicWorld,
 };
 
-use crate::common::Output;
+use crate::common::OutputManager;
 
 pub struct Html {
     pub value: String,
@@ -17,76 +19,59 @@ impl ToString for Html {
     }
 }
 
-pub trait WebCell: BasicCell + RepresentableAs<Html> {}
+type Out = OutputManager<DoubleVec<Html>>;
 
-pub trait WebWorld<const W: usize, const H: usize>:
-    BasicWorld<W, H> + RepresentableAs<Grid<Html, W, H>, Delta = Vec<(Index, Html)>>
+impl<C> OutputField<C, Html> for Out
 where
-    Self::Cell: WebCell,
+    C: BasicCell + Repr<Html>,
 {
-    fn represent(&self) -> Grid<Html, W, H> {
-        let mut grid = [[(); W]; H].map(|row| {
-            row.map(|_| Html {
-                value: String::new(),
-            })
-        });
-        for (y, row) in self.cells().iter().enumerate() {
-            for (x, cell) in row.iter().enumerate() {
-                grid[y][x] = cell.represent()
-            }
-        }
-
-        grid
-    }
-}
-
-type OutputHtml<const W: usize, const H: usize> = Output<Grid<Html, W, H>>;
-
-struct Browser<World, const W: usize, const H: usize>
-where
-    World: WebWorld<W, H>,
-    World::Cell: WebCell,
-{
-    world: World,
-    output: OutputHtml<W, H>,
-}
-
-impl<World, const W: usize, const H: usize> Space<World, OutputHtml<W, H>, Html, W, H>
-    for Browser<World, W, H>
-where
-    World: WebWorld<W, H>,
-    World::Cell: WebCell,
-{
-    fn world_mut(&mut self) -> &mut World {
-        &mut self.world
-    }
-
-    fn world(&self) -> &World {
-        &self.world
-    }
-
-    fn output_mut(&mut self) -> &mut OutputHtml<W, H> {
-        &mut self.output
-    }
-}
-
-impl<World, const W: usize, const H: usize> Browser<World, W, H>
-where
-    World: WebWorld<W, H>,
-    World::Cell: WebCell,
-{
-    fn new(world: World, output: OutputHtml<W, H>) -> Self {
-        Self { world, output }
-    }
-}
-
-impl<const W: usize, const H: usize> OutputField<W, H> for OutputHtml<W, H> {
-    type Unit = Html;
-
-    fn set_unit(&mut self, (x, y): Index, unit: Self::Unit, _refresh: bool) -> Result<(), String> {
+    fn set_unit(&mut self, (x, y): Index, unit: Html, _refresh: bool) -> Result<(), String> {
         self.field[y][x] = unit;
         Ok(())
     }
 
     fn show(&mut self) {}
+}
+
+struct Browser<W, C>
+where
+    C: BasicCell,
+    W: BasicWorld<C>,
+{
+    world: W,
+    output: Out,
+    _data: PhantomData<C>,
+}
+
+impl<'a, W, C> Space<W, C, Out> for Browser<W, C>
+where
+    C: BasicCell + Repr<Html>,
+    W: BasicWorld<C>,
+{
+    type CellRepr = Html;
+    fn world_mut(&mut self) -> &mut W {
+        &mut self.world
+    }
+
+    fn world(&self) -> &W {
+        &self.world
+    }
+
+    fn output_mut(&mut self) -> &mut Out {
+        &mut self.output
+    }
+}
+
+impl<W, C> Browser<W, C>
+where
+    C: BasicCell,
+    W: BasicWorld<C>,
+{
+    fn new(world: W, output: Out) -> Self {
+        Self {
+            world,
+            output,
+            _data: PhantomData,
+        }
+    }
 }

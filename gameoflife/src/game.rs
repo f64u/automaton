@@ -1,6 +1,6 @@
 use cellular_automaton::{
     cell::BasicCell,
-    common::{Grid, Index, Position},
+    common::{Dimensions, DoubleVec, Index},
     world::BasicWorld,
 };
 use itertools::Itertools;
@@ -16,62 +16,77 @@ pub enum Cell {
 }
 
 impl BasicCell for Cell {
-    fn next(&self) -> Self {
+    fn next_state(&self) -> Self {
         match *self {
             Cell::Alive => Cell::Dead,
             Cell::Dead => Cell::Alive,
         }
     }
-}
 
-pub fn random_cells(dimensions: (usize, usize), p: f64) -> impl Iterator<Item = Cell> {
-    (0..dimensions.0 * dimensions.1).map(move |_| {
-        let x: f64 = rand::random();
-        if x < p {
+    fn random<R: rand::Rng + ?Sized>(rng: &mut R) -> Self {
+        let f: f64 = rng.gen();
+        if f < PROPORTION {
             Cell::Dead
         } else {
             Cell::Alive
         }
-    })
+    }
 }
 
-pub struct World<const W: usize, const H: usize> {
-    cells: Grid<Cell, W, H>,
+pub struct World<Cell> {
+    cells: DoubleVec<Cell>,
+    dimensions: Dimensions,
+    delta: Vec<(Index, Cell)>,
 }
 
-impl<const W: usize, const H: usize> BasicWorld<W, H> for World<W, H> {
-    type Cell = Cell;
+impl BasicWorld<Cell> for World<Cell> {
+    fn random<R: rand::Rng + ?Sized>(rng: &mut R, dimensions: Dimensions) -> Self {
+        let cells = (0..dimensions.0 * dimensions.1)
+            .chunks(dimensions.0)
+            .into_iter()
+            .map(|chunk| chunk.map(|_| Cell::random(rng)).collect())
+            .collect();
+        World::new(cells, dimensions)
+    }
 
-    fn cells(&self) -> &Grid<Cell, W, H> {
+    fn new(cells: DoubleVec<Cell>, dimensions: Dimensions) -> Self {
+        let clone = cells.clone();
+        World {
+            cells,
+            dimensions,
+            delta: clone
+                .into_iter()
+                .enumerate()
+                .flat_map(|(j, row)| {
+                    row.into_iter()
+                        .enumerate()
+                        .map(move |(i, cell)| ((i, j), cell))
+                })
+                .collect(),
+        }
+    }
+
+    fn cells(&self) -> &DoubleVec<Cell> {
         &self.cells
     }
 
-    fn cells_mut(&mut self) -> &mut Grid<Cell, W, H> {
+    fn cells_mut(&mut self) -> &mut DoubleVec<Cell> {
         &mut self.cells
     }
 
-    fn new(cells: impl Iterator<Item = Self::Cell>) -> Self {
-        let default = Cell::default();
-        let mut acells = [[default; W]; H];
-        for (y, row) in cells.chunks(W).into_iter().enumerate() {
-            for (x, cell) in row.enumerate() {
-                acells[y][x] = cell;
-            }
-        }
-
-        Self { cells: acells }
-    }
-
-    fn new_random() -> Self {
-        Self::new(random_cells((W, H), PROPORTION))
-    }
-
-    fn delta_future(&self) -> Vec<(Index, Self::Cell)> {
+    fn changes(&self) -> Vec<(Index, Cell)> {
         let mut delta = vec![];
 
-        for (i, j) in (0..W).cartesian_product(0..H) {
+        for (i, j) in (0..self.dimensions().0).cartesian_product(0..self.dimensions().1) {
             let p = (i as isize, j as isize);
-            let count = self.count_alive_neighbors(p);
+            let count = self
+                .moore_neighbors(p)
+                .iter()
+                .filter(|c| match ***c {
+                    Cell::Alive => true,
+                    _ => false,
+                })
+                .count();
             let cell = &self.cells()[j][i];
             match cell {
                 &Cell::Alive if count < 2 || count > 3 => delta.push(((i, j), Cell::Dead)),
@@ -83,19 +98,15 @@ impl<const W: usize, const H: usize> BasicWorld<W, H> for World<W, H> {
         delta
     }
 
-    fn refresh_random(&mut self) {
-        *self = Self::new(random_cells((W, H), PROPORTION))
+    fn delta(&self) -> &Vec<(Index, Cell)> {
+        &self.delta
     }
-}
 
-impl<const W: usize, const H: usize> World<W, H> {
-    fn count_alive_neighbors(&self, p: Position) -> usize {
-        self.moore_neighbors(p)
-            .iter()
-            .filter(|c| match ***c {
-                Cell::Alive => true,
-                _ => false,
-            })
-            .count()
+    fn delta_mut(&mut self) -> &mut Vec<(Index, Cell)> {
+        &mut self.delta
+    }
+
+    fn dimensions(&self) -> Dimensions {
+        self.dimensions
     }
 }

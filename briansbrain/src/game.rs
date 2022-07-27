@@ -16,7 +16,7 @@ pub enum Cell {
 }
 
 impl BasicCell for Cell {
-    fn next(&self) -> Self {
+    fn next_state(&self) -> Self {
         match *self {
             Cell::On => Cell::Dying,
             Cell::Dying => Cell::Off,
@@ -86,9 +86,9 @@ impl<const W: usize, const H: usize> BasicWorld<W, H> for World<W, H> {
                 .count();
 
             match cell {
-                Cell::Off if 2 == alive => delta.push(((i, j), cell.next())),
-                Cell::Dying => delta.push(((i, j), cell.next())),
-                Cell::On => delta.push(((i, j), cell.next())),
+                Cell::Off if 2 == alive => delta.push(((i, j), cell.next_state())),
+                Cell::Dying => delta.push(((i, j), cell.next_state())),
+                Cell::On => delta.push(((i, j), cell.next_state())),
                 _ => {}
             }
         }

@@ -1,9 +1,9 @@
-pub trait RepresentableAs<T> {
-    type Delta;
-    fn represent(&self) -> T;
-    fn next_frame(&self) -> Self::Delta;
+pub type ScreenPosition = (isize, isize);
+pub type Index = (usize, usize);
+pub trait Repr<T> {
+    fn repr(&self) -> T;
 }
 
-pub type Position = (isize, isize);
-pub type Index = (usize, usize);
-pub type Grid<T, const W: usize, const H: usize> = [[T; W]; H];
+#[derive(Clone, Copy)]
+pub struct Dimensions(pub usize, pub usize);
+pub type DoubleVec<T> = Vec<Vec<T>>;
