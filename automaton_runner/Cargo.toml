@@ -17,6 +17,7 @@ sdl2 = {version = "0.35.2", optional = true}
 spaces = {path = "../spaces"}
 
 [features]
+all = ["cursive", "sdl2"]
 cursive = ["dep:cursive", "spaces/cursive"]
 default = ["cursive"]
 sdl2 = ["dep:sdl2", "spaces/sdl2"]

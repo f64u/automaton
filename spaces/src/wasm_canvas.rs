@@ -1,5 +1,3 @@
-use std::marker::PhantomData;
-
 use cellular_automaton::{
     cell::BasicCell,
     common::{DoubleVec, Index},
@@ -40,7 +38,7 @@ where
 {
     world: W,
     output: Out,
-    _data: PhantomData<C>,
+    reprer: fn(C) -> Html,
 }
 
 impl<'a, W, C> Space<W, C, Out> for Browser<W, C>
@@ -49,6 +47,7 @@ where
     W: BasicWorld<C>,
 {
     type CellRepr = Html;
+    type Reprer = fn(C) -> Html;
     fn world_mut(&mut self) -> &mut W {
         &mut self.world
     }
@@ -60,6 +59,10 @@ where
     fn output_mut(&mut self) -> &mut Out {
         &mut self.output
     }
+
+    fn reprer(&self) -> Self::Reprer {
+        self.reprer
+    }
 }
 
 impl<W, C> Browser<W, C>
@@ -67,11 +70,11 @@ where
     C: BasicCell,
     W: BasicWorld<C>,
 {
-    fn new(world: W, output: Out) -> Self {
+    pub fn new(world: W, output: Out, reprer: fn(C) -> Html) -> Self {
         Self {
             world,
             output,
-            _data: PhantomData,
+            reprer,
         }
     }
 }

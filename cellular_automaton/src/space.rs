@@ -14,47 +14,38 @@ where
     O: OutputField<C, Self::CellRepr>,
 {
     type CellRepr;
+    type Reprer: Fn(C) -> Self::CellRepr;
 
     fn world_mut(&mut self) -> &mut W;
     fn world(&self) -> &W;
     fn output_mut(&mut self) -> &mut O;
+    fn reprer(&self) -> Self::Reprer;
 
-    fn draw_whole<F>(&mut self, repr: F) -> Result<(), String>
-    where
-        F: Fn(C) -> Self::CellRepr,
-    {
+    fn draw_whole(&mut self) -> Result<(), String> {
         let data = self
             .world()
             .cells()
             .iter()
-            .map(|row| row.iter().map(|cell| repr(*cell)).collect())
+            .map(|row| row.iter().map(|cell| self.reprer()(*cell)).collect())
             .collect();
         self.output_mut().set_all(data)
     }
 
-    fn draw_delta<F>(&mut self, repr: F) -> Result<(), String>
-    where
-        F: Fn(C) -> Self::CellRepr,
-    {
+    fn draw_delta(&mut self) -> Result<(), String> {
         let changes = self.world().delta().clone();
+        let repr = self.reprer();
         let next = changes.into_iter().map(|(index, cell)| (index, repr(cell)));
         self.output_mut().update(next)
     }
 
-    fn tick_whole<F>(&mut self, repr: F) -> Result<(), String>
-    where
-        F: Fn(C) -> Self::CellRepr,
-    {
+    fn tick_whole(&mut self) -> Result<(), String> {
         self.world_mut().tick();
-        self.draw_whole(repr)
+        self.draw_whole()
     }
 
-    fn tick_delta<F>(&mut self, repr: F) -> Result<(), String>
-    where
-        F: Fn(C) -> Self::CellRepr,
-    {
+    fn tick_delta(&mut self) -> Result<(), String> {
         self.world_mut().tick();
-        self.draw_delta(repr)
+        self.draw_delta()
     }
 }
 

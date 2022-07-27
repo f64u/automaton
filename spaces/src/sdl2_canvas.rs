@@ -1,4 +1,4 @@
-use std::{marker::PhantomData, time::Duration};
+use std::time::Duration;
 
 use cellular_automaton::{
     cell::BasicCell,
@@ -76,7 +76,7 @@ where
 {
     world: W,
     output: Out<'a>,
-    _data: PhantomData<C>,
+    reprer: fn(C) -> Color,
 }
 
 impl<'a, W, C> Space<W, C, Out<'a>> for Gui<'a, W, C>
@@ -85,6 +85,7 @@ where
     W: BasicWorld<C>,
 {
     type CellRepr = Color;
+    type Reprer = fn(C) -> Color;
     fn world_mut(&mut self) -> &mut W {
         &mut self.world
     }
@@ -96,6 +97,10 @@ where
     fn output_mut(&mut self) -> &mut Out<'a> {
         &mut self.output
     }
+
+    fn reprer(&self) -> Self::Reprer {
+        self.reprer
+    }
 }
 
 impl<'a, W, C> Gui<'a, W, C>
@@ -103,11 +108,11 @@ where
     C: BasicCell,
     W: BasicWorld<C>,
 {
-    fn new(world: W, output: Out<'a>) -> Self {
+    fn new(world: W, output: Out<'a>, reprer: fn(C) -> Color) -> Self {
         Gui {
             world,
             output,
-            _data: PhantomData,
+            reprer,
         }
     }
 
@@ -118,11 +123,10 @@ where
     }
 }
 
-pub fn run<W, C, F>(config: Config, world: W, title: &str, repr: F) -> Result<(), String>
+pub fn run<W, C>(config: Config, world: W, title: &str, repr: fn(C) -> Color) -> Result<(), String>
 where
     C: BasicCell,
     W: BasicWorld<C>,
-    F: Fn(C) -> Color,
 {
     let mut millis = config.millis;
 
@@ -146,9 +150,9 @@ where
         pixel_size: config.pixel_size,
     };
 
-    let mut gui = Gui::new(world, output);
+    let mut gui = Gui::new(world, output, repr);
     gui.clear_output();
-    gui.draw_whole(&repr)?;
+    gui.draw_whole()?;
 
     let mut event_dump = sdl_context.event_pump()?;
 
@@ -173,7 +177,7 @@ where
                     let d = gui.world().dimensions();
                     let mut rng = rand::thread_rng();
                     *gui.world_mut() = W::random(&mut rng, d);
-                    gui.draw_whole(&repr)?;
+                    gui.draw_whole()?;
                 }
                 Event::KeyDown {
                     keycode: Some(Keycode::Space),
@@ -198,7 +202,7 @@ where
                     ..
                 } => {
                     if is_paused {
-                        gui.tick_whole(&repr)?
+                        gui.tick_whole()?
                     }
                 }
 
@@ -207,14 +211,14 @@ where
                     ..
                 } => {
                     gui.world_mut().blank();
-                    gui.draw_whole(&repr)?;
+                    gui.draw_whole()?;
                 }
                 Event::MouseButtonDown { x, y, .. } => {
                     let (dx, dy) = config.downscale((x as isize, y as isize));
                     if is_paused {
                         let cell = &mut gui.world_mut().cells_mut()[dy][dx];
                         *cell = cell.next_state();
-                        gui.draw_whole(&repr)?
+                        gui.draw_whole()?
                     } else {
                         is_paused = true;
                     }
@@ -225,7 +229,7 @@ where
         }
 
         if !is_paused {
-            gui.tick_whole(&repr)?
+            gui.tick_whole()?
         }
 
         std::thread::sleep(Duration::from_millis(millis));

@@ -1,4 +1,4 @@
-use std::{marker::PhantomData, time::Duration};
+use std::time::Duration;
 
 use cellular_automaton::{
     cell::BasicCell,
@@ -30,7 +30,7 @@ where
 {
     world: W,
     output: Out,
-    _cell: PhantomData<C>,
+    reprer: fn(C) -> char,
 }
 
 impl<W, C> Space<W, C, Out> for Terminal<W, C>
@@ -39,6 +39,7 @@ where
     W: BasicWorld<C>,
 {
     type CellRepr = char;
+    type Reprer = fn(C) -> char;
     fn world_mut(&mut self) -> &mut W {
         &mut self.world
     }
@@ -50,6 +51,10 @@ where
     fn output_mut(&mut self) -> &mut Out {
         &mut self.output
     }
+
+    fn reprer(&self) -> Self::Reprer {
+        self.reprer
+    }
 }
 
 impl<W, C> Terminal<W, C>
@@ -57,20 +62,19 @@ where
     W: BasicWorld<C>,
     C: BasicCell,
 {
-    fn new(world: W, output: Out) -> Self {
+    fn new(world: W, output: Out, reprer: <Self as Space<W, C, Out>>::Reprer) -> Self {
         Self {
             world,
             output,
-            _cell: PhantomData,
+            reprer,
         }
     }
 }
 
-pub fn run<W, C, F>(world: W, repr: F, update_millis: usize) -> Result<(), String>
+pub fn run<W, C>(world: W, repr: fn(C) -> char, update_millis: usize) -> Result<(), String>
 where
     W: BasicWorld<C> + Send + 'static,
     C: BasicCell + Send + 'static,
-    F: Fn(C) -> char + Send + 'static,
 {
     let mut siv = cursive::default();
     siv.set_autorefresh(true);
@@ -101,12 +105,13 @@ where
             field: texts,
             pixel_size: 1,
         },
+        repr,
     );
     siv.add_global_callback('q', |s| s.quit());
-    canvas.draw_whole(&repr)?;
+    canvas.draw_whole()?;
 
     std::thread::spawn(move || loop {
-        let _ = canvas.tick_delta(&repr);
+        let _ = canvas.tick_delta();
         std::thread::sleep(Duration::from_millis(update_millis as u64));
     });
 
