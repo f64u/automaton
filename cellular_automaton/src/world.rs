@@ -35,7 +35,7 @@ where
     fn tick(&mut self) {
         let changes = self.changes();
         for ((x, y), cell) in changes.iter() {
-            self.cells_mut()[*y][*x] = cell.clone();
+            self.cells_mut()[*y][*x] = *cell;
         }
         *self.delta_mut() = changes;
     }

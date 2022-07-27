@@ -73,16 +73,13 @@ impl BasicWorld<Cell> for World {
             let count = self
                 .moore_neighbors(p)
                 .iter()
-                .filter(|c| match ***c {
-                    Cell::Alive => true,
-                    _ => false,
-                })
+                .filter(|c| matches!(***c, Cell::Alive))
                 .count();
             let cell = &self.cells()[j][i];
-            match cell {
-                &Cell::Alive if count < 2 || count > 3 => delta.push(((i, j), Cell::Dead)),
+            match *cell {
+                Cell::Alive if !(2..=3).contains(&count) => delta.push(((i, j), Cell::Dead)),
 
-                &Cell::Dead if count == 3 => delta.push(((i, j), Cell::Alive)),
+                Cell::Dead if count == 3 => delta.push(((i, j), Cell::Alive)),
                 _ => {}
             }
         }

@@ -49,10 +49,7 @@ impl BasicWorld<Cell> for World {
             let alive = self
                 .moore_neighbors(p)
                 .iter()
-                .filter(|c| match ***c {
-                    Cell::On => true,
-                    _ => false,
-                })
+                .filter(|c| matches!(***c, Cell::On))
                 .count();
 
             match cell {
