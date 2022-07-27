@@ -10,60 +10,53 @@ mod web;
 
 mod worlds;
 
+/// Simulate basic cellular automaton-based worlds
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 struct Args {
-    #[clap(short, long, value_parser, default_value_t = 1200)]
+    /// Width of the canvas to draw in
+    #[clap(short = 'W', long, value_parser, default_value_t = 1200)]
     width: usize,
 
-    #[clap(short, long, value_parser, default_value_t = 700)]
+    /// Height of the canvas to draw in
+    #[clap(short = 'H', long, value_parser, default_value_t = 700)]
     height: usize,
 
+    /// The size of each cell represented in the canvas
     #[clap(short, long, value_parser, default_value_t = 20)]
-    pixel_size: usize,
+    cell_size: usize,
 
+    /// Time to wait between each tick
     #[clap(short, long, value_parser, default_value_t = 100)]
     update_millis: usize,
 
-    #[clap(short, long, default_value_t = Worlds::GameOfLife)]
-    game: Worlds,
+    /// The type of [Worlds] to simulate
+    #[clap(short, long)]
+    world: Worlds,
 
-    #[clap(short, long, default_value_t = FrontEnds::Sdl2)]
+    /// the type of [FrontEnds] to use as canvas
+    #[clap(short, long)]
     frontend: FrontEnds,
 }
 
-#[cfg(all(feature = "sdl2", feature = "cursive"))]
 fn main() -> Result<(), String> {
     use cellular_automaton::common::Dimensions;
 
     let args = Args::parse();
 
     match args.frontend {
-        FrontEnds::Curisve => terminal::run(
-            args.game,
+        #[cfg(feature = "cursive")]
+        FrontEnds::Cursive => terminal::run(
+            args.world,
             Dimensions(args.width, args.height),
             args.update_millis,
         ),
+        #[cfg(feature = "sdl2")]
         FrontEnds::Sdl2 => gui::run(
             worlds::Worlds::BriansBrain,
             Dimensions(args.width, args.height),
-            args.pixel_size,
+            args.cell_size,
             args.update_millis,
         ),
     }
 }
-
-#[cfg(all(feature = "sdl2", not(feature = "cursive")))]
-fn main() -> Result<(), String> {
-    gui::run()?;
-    Ok(())
-}
-
-#[cfg(all(feature = "cursive", not(feature = "sdl2")))]
-fn main() -> Result<(), String> {
-    terminal::run()?;
-    Ok(())
-}
-
-#[cfg(not(any(feature = "cursive", feature = "sdl2")))]
-fn main() {}

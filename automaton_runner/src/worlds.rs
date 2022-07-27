@@ -25,8 +25,11 @@ impl FromStr for Worlds {
 
 #[derive(Debug)]
 pub enum FrontEnds {
+    #[cfg(feature = "sdl2")]
     Sdl2,
-    Curisve,
+
+    #[cfg(feature = "cursive")]
+    Cursive,
 }
 
 impl Display for FrontEnds {
@@ -39,8 +42,11 @@ impl FromStr for FrontEnds {
     type Err = String;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match &s.to_ascii_lowercase()[..] {
+            #[cfg(feature = "sdl2")]
             "gui" | "sdl" | "sdl2" => Ok(Self::Sdl2),
-            "terminal" | "cursive" => Ok(Self::Curisve),
+
+            #[cfg(feature = "cursive")]
+            "terminal" | "cursive" => Ok(Self::Cursive),
             _ => Err(String::from("unknown")),
         }
     }
