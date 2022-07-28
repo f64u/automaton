@@ -1,24 +1,50 @@
 import init, {
   tickBriansWorld,
-  getDimensions,
+  getConfig,
+  worldClick,
+  firstDrawBrains,
+  worldReload,
+  blankWorld,
 } from "./pkg/automaton_runner.js";
 
 await init();
 
-let dimensions = getDimensions();
+let config = getConfig();
+console.log(config.width, config.height);
 
-for (let j = 0; j < dimensions[1]; j++) {
-  let row = document.createElement("div");
-  row.classList.add("row");
-  for (let i = 0; i < dimensions[0]; i++) {
-    let cell = document.createElement("span");
-    row.appendChild(cell);
+const world = document.getElementById("canvas");
+const ctx = world.getContext("2d");
+ctx.canvas.width = config.width;
+ctx.canvas.height = config.height;
+
+console.log(ctx.canvas.width, ctx.canvas.height);
+
+let isPaused = false;
+
+window.addEventListener("keydown", (event) => {
+  if (event.key === " ") {
+    isPaused = !isPaused;
+  } else if (event.key === "r") {
+    worldReload();
+  } else if (event.key === "b") {
+    blankWorld();
   }
-  world.appendChild(row);
-}
+});
+
+canvas.addEventListener("click", (event) => {
+  const x = event.clientX - canvas.offsetLeft;
+  const y = event.clientY - canvas.offsetTop;
+
+  const dx = x / config.pixel_size,
+    dy = y / config.pixel_size;
+
+  worldClick(dx, dy);
+});
+
+firstDrawBrains();
 
 function render() {
-  tickBriansWorld();
+  if (!isPaused) tickBriansWorld();
 
   setTimeout(() => render(), 100);
 }

@@ -10,20 +10,20 @@ use crate::common::OutputManager;
 
 #[wasm_bindgen(module = "/index.js")]
 extern "C" {
-    #[wasm_bindgen(js_name = "setClass")]
-    pub fn set_class(x: usize, y: usize, new_class: HtmlClass);
+    #[wasm_bindgen(js_name = "setPixel")]
+    pub fn set_pixel(x: usize, y: usize, pixel_size: usize, new_class: Color);
 }
 
-pub type HtmlClass = String;
+pub type Color = String;
 
-pub type Classes = OutputManager<()>;
+pub type Colors = OutputManager<()>;
 
-impl<C> OutputField<C, HtmlClass> for Classes
+impl<C> OutputField<C, Color> for Colors
 where
     C: BasicCell,
 {
-    fn set_unit(&mut self, (x, y): Index, unit: HtmlClass, _refresh: bool) -> Result<(), String> {
-        set_class(x, y, unit); // let's see
+    fn set_unit(&mut self, (x, y): Index, unit: Color, _refresh: bool) -> Result<(), String> {
+        set_pixel(x, y, self.pixel_size, unit); // let's see
         Ok(())
     }
 
@@ -36,17 +36,17 @@ where
     W: BasicWorld<C>,
 {
     world: W,
-    output: Classes,
-    reprer: fn(C) -> HtmlClass,
+    output: Colors,
+    reprer: fn(C) -> Color,
 }
 
-impl<'a, W, C> Space<W, C, Classes> for Browser<W, C>
+impl<'a, W, C> Space<W, C, Colors> for Browser<W, C>
 where
     C: BasicCell,
     W: BasicWorld<C>,
 {
-    type CellRepr = HtmlClass;
-    type Reprer = fn(C) -> HtmlClass;
+    type CellRepr = Color;
+    type Reprer = fn(C) -> Color;
     fn world_mut(&mut self) -> &mut W {
         &mut self.world
     }
@@ -55,7 +55,7 @@ where
         &self.world
     }
 
-    fn output_mut(&mut self) -> &mut Classes {
+    fn output_mut(&mut self) -> &mut Colors {
         &mut self.output
     }
 
@@ -69,7 +69,7 @@ where
     C: BasicCell,
     W: BasicWorld<C>,
 {
-    pub fn new(world: W, output: Classes, reprer: fn(C) -> HtmlClass) -> Self {
+    pub fn new(world: W, output: Colors, reprer: fn(C) -> Color) -> Self {
         Self {
             world,
             output,
@@ -80,7 +80,7 @@ where
 
 pub fn build_web<W, C>(
     dimensions: Dimensions,
-    repr: fn(C) -> HtmlClass,
+    repr: fn(C) -> Color,
     pixel_size: usize,
 ) -> Browser<W, C>
 where

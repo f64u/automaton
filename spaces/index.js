@@ -1,5 +1,6 @@
-export function setClass(x, y, className) {
-  let world = document.getElementById("world");
-  let cell = world.children[y].children[x];
-  cell.className = className;
+export function setPixel(x, y, size, color) {
+  const world = document.getElementById("canvas");
+  const ctx = world.getContext("2d");
+  ctx.fillStyle = color;
+  ctx.fillRect(x * size, y * size, size, size);
 }

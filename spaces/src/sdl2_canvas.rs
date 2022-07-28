@@ -173,12 +173,7 @@ where
                 Event::KeyDown {
                     keycode: Some(Keycode::R),
                     ..
-                } => {
-                    let d = gui.world().dimensions();
-                    let mut rng = rand::thread_rng();
-                    *gui.world_mut() = W::random(&mut rng, d);
-                    gui.draw_whole()?;
-                }
+                } => gui.replace_with_random_world()?,
                 Event::KeyDown {
                     keycode: Some(Keycode::Space),
                     ..
@@ -209,15 +204,11 @@ where
                 Event::KeyDown {
                     keycode: Some(Keycode::B),
                     ..
-                } => {
-                    gui.world_mut().blank();
-                    gui.draw_whole()?;
-                }
+                } => gui.blank_world()?,
                 Event::MouseButtonDown { x, y, .. } => {
                     let (dx, dy) = config.downscale((x as isize, y as isize));
                     if is_paused {
-                        let cell = &mut gui.world_mut().cells_mut()[dy][dx];
-                        *cell = cell.next_state();
+                        gui.click_world((dx, dy));
                         gui.draw_whole()?
                     } else {
                         is_paused = true;

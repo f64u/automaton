@@ -47,6 +47,24 @@ where
         self.world_mut().tick();
         self.draw_delta()
     }
+
+    fn replace_with_random_world(&mut self) -> Result<(), String> {
+        let d = self.world().dimensions();
+        let mut rng = rand::thread_rng();
+        *self.world_mut() = W::random(&mut rng, d);
+        self.draw_whole()
+    }
+
+    fn click_world(&mut self, (x, y): Index) {
+        let cell = &mut self.world_mut().cells_mut()[y][x];
+        *cell = cell.next_state();
+        *self.world_mut().delta_mut() = vec![((x, y), *cell)];
+    }
+
+    fn blank_world(&mut self) -> Result<(), String> {
+        self.world_mut().blank();
+        self.draw_whole()
+    }
 }
 
 pub trait OutputField<C, S>

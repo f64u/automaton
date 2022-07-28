@@ -12,7 +12,7 @@ crate-type = ["cdylib"]
 [dependencies]
 briansbrain = {path = "../briansbrain"}
 cellular_automaton = {path = "../cellular_automaton"}
-clap = {version = "3.2.15", features = ["derive"]}
+clap = {version = "3.2.15", features = ["derive"], optional = true}
 cursive = {version = "0.19.0", optional = true}
 gameoflife = {path = "../gameoflife"}
 rand = "0.8.5"
@@ -21,6 +21,6 @@ spaces = {path = "../spaces"}
 wasm-bindgen = {version = "0.2.82", optional = true}
 
 [features]
-cursive = ["dep:cursive", "spaces/cursive"]
-sdl2 = ["dep:sdl2", "spaces/sdl2"]
+cursive = ["dep:cursive", "dep:clap", "spaces/cursive"]
+sdl2 = ["dep:sdl2", "dep:clap", "spaces/sdl2"]
 wasm = ["dep:wasm-bindgen", "spaces/wasm"]
