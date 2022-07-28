@@ -10,4 +10,3 @@ cellular_automaton = {path = "../cellular_automaton"}
 itertools = "0.10.3"
 rand = "0.8.5"
 sdl2 = {version = "0.35.2", optional = true}
-spaces = {path = "../spaces"}

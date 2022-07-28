@@ -4,6 +4,9 @@ edition = "2021"
 name = "automaton_runner"
 version = "0.1.0"
 
+[lib]
+crate-type = ["cdylib"]
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
@@ -15,9 +18,9 @@ gameoflife = {path = "../gameoflife"}
 rand = "0.8.5"
 sdl2 = {version = "0.35.2", optional = true}
 spaces = {path = "../spaces"}
+wasm-bindgen = {version = "0.2.82", optional = true}
 
 [features]
-all = ["cursive", "sdl2"]
 cursive = ["dep:cursive", "spaces/cursive"]
-default = ["cursive"]
 sdl2 = ["dep:sdl2", "spaces/sdl2"]
+wasm = ["dep:wasm-bindgen", "spaces/wasm"]

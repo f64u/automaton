@@ -1,53 +1,52 @@
 use cellular_automaton::{
     cell::BasicCell,
-    common::{DoubleVec, Index},
+    common::{Dimensions, Index},
     space::{OutputField, Space},
     world::BasicWorld,
 };
+use wasm_bindgen::prelude::*;
 
 use crate::common::OutputManager;
 
-pub struct Html {
-    pub value: String,
+#[wasm_bindgen(module = "/index.js")]
+extern "C" {
+    #[wasm_bindgen(js_name = "setClass")]
+    pub fn set_class(x: usize, y: usize, new_class: HtmlClass);
 }
 
-impl ToString for Html {
-    fn to_string(&self) -> String {
-        self.value.clone()
-    }
-}
+pub type HtmlClass = String;
 
-type Out = OutputManager<DoubleVec<Html>>;
+pub type Classes = OutputManager<()>;
 
-impl<C> OutputField<C, Html> for Out
+impl<C> OutputField<C, HtmlClass> for Classes
 where
     C: BasicCell,
 {
-    fn set_unit(&mut self, (x, y): Index, unit: Html, _refresh: bool) -> Result<(), String> {
-        self.field[y][x] = unit;
+    fn set_unit(&mut self, (x, y): Index, unit: HtmlClass, _refresh: bool) -> Result<(), String> {
+        set_class(x, y, unit); // let's see
         Ok(())
     }
 
     fn show(&mut self) {}
 }
 
-struct Browser<W, C>
+pub struct Browser<W, C>
 where
     C: BasicCell,
     W: BasicWorld<C>,
 {
     world: W,
-    output: Out,
-    reprer: fn(C) -> Html,
+    output: Classes,
+    reprer: fn(C) -> HtmlClass,
 }
 
-impl<'a, W, C> Space<W, C, Out> for Browser<W, C>
+impl<'a, W, C> Space<W, C, Classes> for Browser<W, C>
 where
     C: BasicCell,
     W: BasicWorld<C>,
 {
-    type CellRepr = Html;
-    type Reprer = fn(C) -> Html;
+    type CellRepr = HtmlClass;
+    type Reprer = fn(C) -> HtmlClass;
     fn world_mut(&mut self) -> &mut W {
         &mut self.world
     }
@@ -56,7 +55,7 @@ where
         &self.world
     }
 
-    fn output_mut(&mut self) -> &mut Out {
+    fn output_mut(&mut self) -> &mut Classes {
         &mut self.output
     }
 
@@ -70,11 +69,33 @@ where
     C: BasicCell,
     W: BasicWorld<C>,
 {
-    pub fn new(world: W, output: Out, reprer: fn(C) -> Html) -> Self {
+    pub fn new(world: W, output: Classes, reprer: fn(C) -> HtmlClass) -> Self {
         Self {
             world,
             output,
             reprer,
         }
     }
+}
+
+pub fn build_web<W, C>(
+    dimensions: Dimensions,
+    repr: fn(C) -> HtmlClass,
+    pixel_size: usize,
+) -> Browser<W, C>
+where
+    W: BasicWorld<C>,
+    C: BasicCell,
+{
+    let mut rng = rand::thread_rng();
+    let world = W::random(&mut rng, dimensions);
+    let output = Browser::new(
+        world,
+        OutputManager {
+            field: (),
+            pixel_size,
+        },
+        repr,
+    );
+    output
 }

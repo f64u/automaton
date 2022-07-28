@@ -1,4 +1,5 @@
 use cellular_automaton::{common::Dimensions, world::BasicWorld};
+
 use spaces::cursive_canvas;
 
 use briansbrain::{cell::Cell as BrainCell, world::World as BrainWorld};

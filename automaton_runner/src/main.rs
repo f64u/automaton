@@ -2,11 +2,11 @@ use crate::worlds::{FrontEnds, Worlds};
 use clap::Parser;
 
 #[cfg(feature = "sdl2")]
-mod gui;
+pub mod gui;
 #[cfg(feature = "cursive")]
-mod terminal;
+pub mod terminal;
 #[cfg(feature = "wasm")]
-mod web;
+pub mod web;
 
 mod worlds;
 
