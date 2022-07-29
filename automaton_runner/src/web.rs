@@ -38,7 +38,7 @@ pub fn world_click(x: usize, y: usize) {
 pub fn blank_world() {
     BROWSER.with(|b| {
         let mut b = b.borrow_mut();
-        let _ = b.blank_world();
+        let _ = b.replace_with_blank_world();
     })
 }
 

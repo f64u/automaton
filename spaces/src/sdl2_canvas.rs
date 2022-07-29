@@ -204,7 +204,7 @@ where
                 Event::KeyDown {
                     keycode: Some(Keycode::B),
                     ..
-                } => gui.blank_world()?,
+                } => gui.replace_with_blank_world()?,
                 Event::MouseButtonDown { x, y, .. } => {
                     let (dx, dy) = config.downscale((x as isize, y as isize));
                     if is_paused {

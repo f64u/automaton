@@ -17,8 +17,7 @@ impl BasicWorld<Cell> for World {
     fn changes(&self) -> Vec<(Index, Cell)> {
         let mut delta = vec![];
 
-        for (i, j) in (0..self.dimensions().0).cartesian_product(0..self.dimensions().1) {
-            let p = (i as isize, j as isize);
+        for p @ (i, j) in (0..self.dimensions().0).cartesian_product(0..self.dimensions().1) {
             let cell = &self.cells()[j][i];
             let alive = self
                 .moore_neighbors(p)

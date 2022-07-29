@@ -53,7 +53,7 @@ fn main() -> Result<(), String> {
         ),
         #[cfg(feature = "sdl2")]
         FrontEnds::Sdl2 => gui::run(
-            worlds::Worlds::BriansBrain,
+            args.world,
             Dimensions(args.width, args.height),
             args.cell_size,
             args.update_millis,
