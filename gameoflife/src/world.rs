@@ -1,5 +1,5 @@
 use cellular_automaton::{
-    common::{Dimensions, DoubleVec, Index},
+    common::{linearize, Dimensions, DoubleVec, Index},
     world::BasicWorld,
 };
 use itertools::Itertools;
@@ -18,15 +18,7 @@ impl BasicWorld<Cell> for World {
         Self {
             cells,
             dimensions,
-            delta: clone
-                .into_iter()
-                .enumerate()
-                .flat_map(|(j, row)| {
-                    row.into_iter()
-                        .enumerate()
-                        .map(move |(i, cell)| ((i, j), cell))
-                })
-                .collect(),
+            delta: linearize(clone),
         }
     }
 

@@ -4,6 +4,10 @@ use spaces::cursive_canvas;
 
 use briansbrain::{cell::Cell as BrainCell, world::World as BrainWorld};
 use gameoflife::{cell::Cell as LifeCell, world::World as LifeWorld};
+use langtonsant::{
+    cell::{Cell as LangtonsCell, CellVariant, Color, Direction},
+    world::World as LangtonsWorld,
+};
 
 use crate::worlds::Worlds;
 
@@ -30,6 +34,33 @@ pub fn run(world: Worlds, dimensions: Dimensions, update_millis: usize) -> Resul
                     BrainCell::On => 'O',
                     BrainCell::Dying => '*',
                     BrainCell::Off => ' ',
+                },
+                update_millis,
+            )?;
+        }
+        Worlds::LangtonsAnt => {
+            let mut rng = rand::thread_rng();
+            let world = LangtonsWorld::random(&mut rng, dimensions);
+
+            cursive_canvas::run(
+                world,
+                |c| {
+                    let colors = "!\"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~";
+                    match c {
+                        LangtonsCell {
+                            variant: CellVariant::Ant(d, _),
+                            ..
+                        } => match d {
+                            Direction::Left => '⇦',
+                            Direction::Right => '⇨',
+                            Direction::Up => '⇧',
+                            Direction::Down => '⇩',
+                        },
+                        LangtonsCell {
+                            variant: CellVariant::Color(Color { value, .. }),
+                            ..
+                        } => colors.chars().nth(value).unwrap_or('?'),
+                    }
                 },
                 update_millis,
             )?;

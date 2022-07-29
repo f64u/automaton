@@ -4,6 +4,7 @@ use std::{fmt::Display, str::FromStr};
 pub enum Worlds {
     GameOfLife,
     BriansBrain,
+    LangtonsAnt,
 }
 
 impl Display for Worlds {
@@ -18,6 +19,7 @@ impl FromStr for Worlds {
         match s {
             "gof" | "Game of Life" | "GameOfLife" => Ok(Self::GameOfLife),
             "bb" | "Brian's Brian " | "BriansBrian" => Ok(Self::BriansBrain),
+            "la" | "Langton's Ant" | "LangtonsAnt" => Ok(Self::LangtonsAnt),
             _ => Err(String::from("unknown")),
         }
     }

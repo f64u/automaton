@@ -1,6 +1,10 @@
 use briansbrain::{cell::Cell as BrainCell, world::World as BrainWorld};
 use cellular_automaton::{common::Dimensions, world::BasicWorld};
 use gameoflife::{cell::Cell as LifeCell, world::World as LifeWorld};
+use langtonsant::{
+    cell::{Cell as LangtonsCell, CellVariant, Color as CellColor},
+    world::World as LangtonsWorld,
+};
 use sdl2::pixels::Color;
 use spaces::sdl2_canvas::{self, Config};
 
@@ -34,6 +38,22 @@ pub fn run(
                 BrainCell::On => Color::WHITE,
                 BrainCell::Dying => Color::BLUE,
                 BrainCell::Off => Color::BLACK,
+            })?;
+        }
+        Worlds::LangtonsAnt => {
+            let world = LangtonsWorld::random(&mut rng, world_dimenions);
+            sdl2_canvas::run(config, world, "Langton's Ant", |c| {
+                let colors = [Color::WHITE, Color::BLACK];
+                match c {
+                    LangtonsCell {
+                        variant: CellVariant::Ant(_, _),
+                        ..
+                    } => Color::RED,
+                    LangtonsCell {
+                        variant: CellVariant::Color(CellColor { value, .. }),
+                        ..
+                    } => colors[value],
+                }
             })?;
         }
     }
