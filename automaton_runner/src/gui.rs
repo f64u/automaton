@@ -16,7 +16,7 @@ pub fn run(
     pixel_size: usize,
     update_millis: usize,
 ) -> Result<(), String> {
-    let world_dimenions = Dimensions(
+    let world_dimensions = Dimensions(
         window_dimensions.0 / pixel_size,
         window_dimensions.1 / pixel_size,
     );
@@ -26,35 +26,35 @@ pub fn run(
 
     match world {
         Worlds::GameOfLife => {
-            let world = LifeWorld::new_random(&mut rng, world_dimenions);
+            let world = LifeWorld::new_random(&mut rng, world_dimensions);
             sdl2_canvas::run(config, world, "Game of Life", |c| match c {
-                LifeCell::Alive => Color::WHITE,
-                LifeCell::Dead => Color::BLACK,
+                LifeCell::Alive => Color::RGB(248, 90, 202),
+                LifeCell::Dead => Color::RGB(16, 7, 32),
             })?;
         }
         Worlds::BriansBrain => {
-            let world = BrainWorld::new_random(&mut rng, world_dimenions);
+            let world = BrainWorld::new_random(&mut rng, world_dimensions);
             sdl2_canvas::run(config, world, "Brian's Brian", |c| match c {
-                BrainCell::On => Color::WHITE,
-                BrainCell::Dying => Color::BLUE,
-                BrainCell::Off => Color::BLACK,
+                BrainCell::On => Color::RGB(255, 229, 180),
+                BrainCell::Dying => Color::RGB(31, 70, 144),
+                BrainCell::Off => Color::RGB(35, 25, 85),
             })?;
         }
         Worlds::LangtonsAnt => {
             use CellType::*;
             let world = LangtonsWorld::random_with_pattern_of(
                 &mut rng,
-                world_dimenions,
-                vec![CCW, CW, CW, CW, CW, CW, CCW, CCW, CW],
+                world_dimensions,
+                vec![CCW, CCW, CW, CW],
             );
             println!("{:?}", world.pattern);
 
             sdl2_canvas::run(config, world, "Langton's Ant", |c| {
                 let colors = [
-                    Color::BLACK,
-                    Color::RGB(75, 0, 130),
-                    Color::RGB(153, 50, 204),
-                    Color::RGB(255, 0, 255),
+                    Color::RGB(16, 7, 32),
+                    Color::RGB(68, 45, 124),
+                    Color::RGB(99, 65, 180),
+                    Color::RGB(218, 250, 139),
                     Color::RGB(230, 230, 250),
                     Color::RGB(32, 178, 170),
                     Color::RGB(152, 251, 152),

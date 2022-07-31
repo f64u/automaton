@@ -5,7 +5,7 @@ use spaces::cursive_canvas;
 use briansbrain::{cell::Cell as BrainCell, world::World as BrainWorld};
 use gameoflife::{cell::Cell as LifeCell, world::World as LifeWorld};
 use langtonsant::{
-    cell::{Cell as LangtonsCell, Color, Direction},
+    cell::{Cell as LangtonsCell, CellType, Color, Direction},
     world::World as LangtonsWorld,
 };
 
@@ -40,7 +40,15 @@ pub fn run(world: Worlds, dimensions: Dimensions, update_millis: usize) -> Resul
         }
         Worlds::LangtonsAnt => {
             let mut rng = rand::thread_rng();
-            let world = LangtonsWorld::new_random(&mut rng, dimensions);
+            use CellType::*;
+            let world = LangtonsWorld::random_with_pattern_of(
+                &mut rng,
+                dimensions,
+                //vec![CCW, CW, CW, CW, CW, CW, CCW, CCW, CW],
+                vec![CCW, CCW, CW, CW],
+            );
+            let world = world.blank();
+            println!("{:?}", world.pattern);
 
             cursive_canvas::run(
                 world,
