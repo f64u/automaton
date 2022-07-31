@@ -2,7 +2,7 @@ use briansbrain::{cell::Cell as BrainCell, world::World as BrainWorld};
 use cellular_automaton::{common::Dimensions, world::BasicWorld};
 use gameoflife::{cell::Cell as LifeCell, world::World as LifeWorld};
 use langtonsant::{
-    cell::{Cell as LangtonsCell, CellVariant, Color as CellColor},
+    cell::{Cell as LangtonsCell, CellType, Color as CellColor},
     world::World as LangtonsWorld,
 };
 use sdl2::pixels::Color;
@@ -26,14 +26,14 @@ pub fn run(
 
     match world {
         Worlds::GameOfLife => {
-            let world = LifeWorld::random(&mut rng, world_dimenions);
+            let world = LifeWorld::new_random(&mut rng, world_dimenions);
             sdl2_canvas::run(config, world, "Game of Life", |c| match c {
                 LifeCell::Alive => Color::WHITE,
                 LifeCell::Dead => Color::BLACK,
             })?;
         }
         Worlds::BriansBrain => {
-            let world = BrainWorld::random(&mut rng, world_dimenions);
+            let world = BrainWorld::new_random(&mut rng, world_dimenions);
             sdl2_canvas::run(config, world, "Brian's Brian", |c| match c {
                 BrainCell::On => Color::WHITE,
                 BrainCell::Dying => Color::BLUE,
@@ -41,18 +41,31 @@ pub fn run(
             })?;
         }
         Worlds::LangtonsAnt => {
-            let world = LangtonsWorld::random(&mut rng, world_dimenions);
+            use CellType::*;
+            let world = LangtonsWorld::random_with_pattern_of(
+                &mut rng,
+                world_dimenions,
+                vec![CCW, CW, CW, CW, CW, CW, CCW, CCW, CW],
+            );
+            println!("{:?}", world.pattern);
+
             sdl2_canvas::run(config, world, "Langton's Ant", |c| {
-                let colors = [Color::WHITE, Color::BLACK];
+                let colors = [
+                    Color::BLACK,
+                    Color::RGB(75, 0, 130),
+                    Color::RGB(153, 50, 204),
+                    Color::RGB(255, 0, 255),
+                    Color::RGB(230, 230, 250),
+                    Color::RGB(32, 178, 170),
+                    Color::RGB(152, 251, 152),
+                    Color::RGB(50, 205, 50),
+                    Color::RGB(0, 255, 0),
+                    Color::WHITE,
+                ];
+
                 match c {
-                    LangtonsCell {
-                        variant: CellVariant::Ant(_, _),
-                        ..
-                    } => Color::RED,
-                    LangtonsCell {
-                        variant: CellVariant::Color(CellColor { value, .. }),
-                        ..
-                    } => colors[value],
+                    LangtonsCell::Ant(_, _) => Color::RED,
+                    LangtonsCell::Color(CellColor { value, .. }) => colors[value],
                 }
             })?;
         }

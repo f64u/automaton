@@ -12,8 +12,19 @@ where
     C: BasicCell,
     Self: Sized,
 {
-    /// Gives a blank [BasicWorld] with given [Dimensions], using the [BasicCell]'s [Default] value
-    fn blank(dimensions: Dimensions) -> Self {
+    /// Gives a blank [BasicWorld] of the same configuration as the original world
+    fn blank(&self) -> Self {
+        Self::new_blank(self.dimensions())
+    }
+
+    /// Gives a random [BasicWorld] of the same configuration as the original world
+    fn random<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> Self {
+        Self::new_random(rng, self.dimensions())
+    }
+
+    /// Constaruct a new [BasicWorld]
+    fn new(cells: DoubleVec<C>, dimensions: Dimensions) -> Self;
+    fn new_blank(dimensions: Dimensions) -> Self {
         let default = C::default();
         let cells = vec![vec![(); dimensions.0]; dimensions.1]
             .into_iter()
@@ -22,8 +33,7 @@ where
         Self::new(cells, dimensions)
     }
 
-    /// Gives a random [BasicWorld] of given [Dimensions]
-    fn random<R: rand::Rng + ?Sized>(rng: &mut R, dimensions: Dimensions) -> Self {
+    fn new_random<R: rand::Rng + ?Sized>(rng: &mut R, dimensions: Dimensions) -> Self {
         let cells = (0..dimensions.0 * dimensions.1)
             .chunks(dimensions.0)
             .into_iter()
@@ -31,9 +41,6 @@ where
             .collect();
         Self::new(cells, dimensions)
     }
-
-    /// Constaruct a new [BasicWorld]
-    fn new(cells: DoubleVec<C>, dimensions: Dimensions) -> Self;
 
     /// Gets a shared referene to the grid of [BasicCell]s
     fn cells(&self) -> &DoubleVec<C>;
@@ -61,7 +68,14 @@ where
         *self.delta_mut() = changes;
     }
 
-    /// Returns the Moore Neihgbors for a given [BasicCell] for a given [Index] (x, y)
+    /// A click happened at a given [Index]
+    fn click(&mut self, i @ (x, y): Index) {
+        let c = &mut self.cells_mut()[y][x];
+        *c = c.next_state();
+        *self.delta_mut() = vec![(i, *c)]
+    }
+
+    /// Returns the Moore Neihgbors for a given [BasicCell] at a given [Index] (x, y)
     fn moore_neighbors(&self, (x, y): Index) -> Vec<&C> {
         let (x, y) = (x as isize, y as isize);
         (x.max(1) - 1..=(x + 1).min(self.dimensions().0 as isize - 1))

@@ -5,7 +5,7 @@ use spaces::cursive_canvas;
 use briansbrain::{cell::Cell as BrainCell, world::World as BrainWorld};
 use gameoflife::{cell::Cell as LifeCell, world::World as LifeWorld};
 use langtonsant::{
-    cell::{Cell as LangtonsCell, CellVariant, Color, Direction},
+    cell::{Cell as LangtonsCell, Color, Direction},
     world::World as LangtonsWorld,
 };
 
@@ -15,7 +15,7 @@ pub fn run(world: Worlds, dimensions: Dimensions, update_millis: usize) -> Resul
     let mut rng = rand::thread_rng();
     match world {
         Worlds::GameOfLife => {
-            let world = LifeWorld::random(&mut rng, dimensions);
+            let world = LifeWorld::new_random(&mut rng, dimensions);
 
             cursive_canvas::run(
                 world,
@@ -27,7 +27,7 @@ pub fn run(world: Worlds, dimensions: Dimensions, update_millis: usize) -> Resul
             )?;
         }
         Worlds::BriansBrain => {
-            let world = BrainWorld::random(&mut rng, dimensions);
+            let world = BrainWorld::new_random(&mut rng, dimensions);
             cursive_canvas::run(
                 world,
                 |c| match c {
@@ -40,26 +40,22 @@ pub fn run(world: Worlds, dimensions: Dimensions, update_millis: usize) -> Resul
         }
         Worlds::LangtonsAnt => {
             let mut rng = rand::thread_rng();
-            let world = LangtonsWorld::random(&mut rng, dimensions);
+            let world = LangtonsWorld::new_random(&mut rng, dimensions);
 
             cursive_canvas::run(
                 world,
                 |c| {
                     let colors = "!\"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~";
                     match c {
-                        LangtonsCell {
-                            variant: CellVariant::Ant(d, _),
-                            ..
-                        } => match d {
+                        LangtonsCell::Ant(d, _) => match d {
                             Direction::Left => '⇦',
                             Direction::Right => '⇨',
                             Direction::Up => '⇧',
                             Direction::Down => '⇩',
                         },
-                        LangtonsCell {
-                            variant: CellVariant::Color(Color { value, .. }),
-                            ..
-                        } => colors.chars().nth(value).unwrap_or('?'),
+                        LangtonsCell::Color(Color { value, .. }) => {
+                            colors.chars().nth(value).unwrap_or('?')
+                        }
                     }
                 },
                 update_millis,

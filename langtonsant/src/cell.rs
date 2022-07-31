@@ -53,106 +53,79 @@ impl Color {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub enum CellVariant {
+pub enum Cell {
     Color(Color),
     Ant(Direction, Color),
 }
 
-#[derive(Clone, Copy, Debug)]
-pub struct Cell {
-    pub pattern: &'static [CellType],
-    pub variant: CellVariant,
+impl Cell {
+    pub fn to_ant(&self) -> Self {
+        match *self {
+            s @ Self::Ant(_, _) => s,
+            Self::Color(c) => Self::Ant(Direction::Left, c),
+        }
+    }
+
+    pub fn to_color(&self) -> Self {
+        match *self {
+            s @ Self::Color(_) => s,
+            Self::Ant(_, c) => Self::Color(c),
+        }
+    }
 }
 
 impl Default for Cell {
     fn default() -> Self {
-        Cell {
-            pattern: &[CellType::CW, CellType::CCW],
-            variant: CellVariant::Color(Color {
-                value: 0,
-                cell_type: CellType::CW,
-            }),
-        }
+        Self::Color(Color {
+            value: 0,
+            cell_type: CellType::CW,
+        })
     }
 }
 
 impl BasicCell for Cell {
     fn next_state(&self) -> Self {
         match *self {
-            Cell {
-                pattern,
-                variant: CellVariant::Color(c),
-            } => {
-                let n = pattern.len();
-                let new_c = c.next();
-                if new_c.value == n {
-                    Cell {
-                        pattern,
-                        variant: CellVariant::Ant(
-                            Direction::Right,
-                            Color {
-                                value: 0,
-                                cell_type: pattern[0],
-                            },
-                        ),
-                    }
+            Self::Ant(d, c) => {
+                if matches!(d, Direction::Down) {
+                    self.to_color()
                 } else {
-                    Cell {
-                        pattern,
-                        variant: CellVariant::Color(new_c),
-                    }
+                    Self::Ant(d.cw(), c)
                 }
             }
-            Cell {
-                pattern,
-                variant: CellVariant::Ant(d, c),
-            } => {
-                let n = self.pattern.len();
-                if c.value < n - 1 {
-                    Cell {
-                        pattern,
-                        variant: CellVariant::Ant(d, c.next()),
-                    }
-                } else if matches!(d, Direction::Left) {
-                    Cell {
-                        pattern,
-                        variant: CellVariant::Color(c),
-                    }
-                } else {
-                    let new_d = match d {
-                        Direction::Right => Direction::Down,
-                        Direction::Down => Direction::Left,
-                        Direction::Left => unreachable!(),
-                        Direction::Up => Direction::Right,
-                    };
-                    Cell {
-                        pattern,
-                        variant: CellVariant::Ant(new_d, c),
-                    }
-                }
-            }
+            Self::Color(c) => Self::Color(c.next()),
         }
     }
 
     fn random<R: Rng + ?Sized>(rng: &mut R) -> Self {
-        let f: f64 = rng.gen();
-
-        let t: CellType;
-        let v: usize;
-        if f < PROPORTION {
-            t = CellType::CW;
-            v = 0;
+        if rng.gen_bool(PROPORTION) {
+            Cell::Color(Color {
+                cell_type: if rng.gen_bool(0.5) {
+                    CellType::CW
+                } else {
+                    CellType::CCW
+                },
+                value: 0,
+            })
         } else {
-            t = CellType::CCW;
-            v = 1;
+            Cell::Color(Color {
+                cell_type: if rng.gen_bool(0.5) {
+                    CellType::CW
+                } else {
+                    CellType::CCW
+                },
+                value: 1,
+            })
         }
+    }
+}
 
-        Cell {
-            pattern: &[CellType::CW, CellType::CCW],
-            variant: CellVariant::Color(Color {
-                value: v,
-                cell_type: t,
-            }),
-        }
+impl Cell {
+    pub fn random_with_pattern<R: Rng + ?Sized>(rng: &mut R, pattern: &Vec<CellType>) -> Self {
+        let v = rng.gen_range(0..pattern.len());
+        Self::Color(Color {
+            value: v,
+            cell_type: pattern[v],
+        })
     }
 }

@@ -62,23 +62,20 @@ where
 
     /// Replace the [Space]'s [BasicWorld] with a random one
     fn replace_with_random_world(&mut self) -> Result<(), String> {
-        let d = self.world().dimensions();
         let mut rng = rand::thread_rng();
-        *self.world_mut() = W::random(&mut rng, d);
+        *self.world_mut() = self.world().random(&mut rng);
         self.draw_whole()
     }
 
     /// Replace the [Space]'s [BasicWorld] with a blank wone
     fn replace_with_blank_world(&mut self) -> Result<(), String> {
-        *self.world_mut() = W::blank(self.world().dimensions());
+        *self.world_mut() = self.world().blank();
         self.draw_whole()
     }
 
-    /// Propagate a click that happened on the [BasicWorld] at the [Index] (x. y)
-    fn click_world(&mut self, (x, y): Index) {
-        let cell = &mut self.world_mut().cells_mut()[y][x];
-        *cell = cell.next_state();
-        *self.world_mut().delta_mut() = vec![((x, y), *cell)];
+    /// Propagate a click that happened on the [BasicWorld] at the [Index] (x, y)
+    fn click_world(&mut self, i: Index) {
+        self.world_mut().click(i);
     }
 }
 

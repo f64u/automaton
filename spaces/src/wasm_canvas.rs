@@ -88,7 +88,7 @@ where
     C: BasicCell,
 {
     let mut rng = rand::thread_rng();
-    let world = W::random(&mut rng, dimensions);
+    let world = W::new_random(&mut rng, dimensions);
     let output = Browser::new(
         world,
         OutputManager {
