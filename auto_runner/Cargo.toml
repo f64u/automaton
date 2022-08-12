@@ -12,9 +12,9 @@ crate-type = ["cdylib", "lib"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-auto_cellular = {path = "../auto_cellular"}
-auto_spaces = {path = "../auto_spaces"}
-auto_worlds = {path = "../auto_worlds"}
+auto_cellular = "0.1"
+auto_spaces = "0.1"
+auto_worlds = "0.1"
 clap = {version = "3.2.15", features = ["derive"], optional = true}
 cursive = {version = "0.19.0", optional = true}
 rand = "0.8.5"
