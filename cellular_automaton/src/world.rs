@@ -80,7 +80,7 @@ where
         let (w, h) = (self.dimensions().0 as isize, self.dimensions().1 as isize);
 
         (-1..=1)
-            .map(|i| {
+            .flat_map(|i| {
                 (-1..=1).map(move |j| {
                     (
                         (x + i).rem_euclid(w) as usize,
@@ -88,7 +88,6 @@ where
                     )
                 })
             })
-            .flatten()
             .filter(move |&item| item != p)
             .collect()
     }
