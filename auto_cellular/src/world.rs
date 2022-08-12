@@ -5,11 +5,12 @@ use crate::{
 
 /// A given [BasicWorld] knows how to go from one state of [BasicCell] to the next on each
 /// tick by provding a [BasicWorld::changes] method
-pub trait BasicWorld<C>
+pub trait BasicWorld
 where
-    C: BasicCell,
     Self: Sized,
 {
+    /// Type of [BasicCell] this world manages
+    type Cell: BasicCell;
     /// Gives a blank [BasicWorld] of the same configuration as the original world
     fn blank(&self) -> Self {
         Self::new_blank(self.dimensions())
@@ -21,9 +22,9 @@ where
     }
 
     /// Constaruct a new [BasicWorld]
-    fn new(cells: DoubleVec<C>, dimensions: Dimensions) -> Self;
+    fn new(cells: DoubleVec<Self::Cell>, dimensions: Dimensions) -> Self;
     fn new_blank(dimensions: Dimensions) -> Self {
-        let default = C::default();
+        let default = Self::Cell::default();
         let cells = vec![vec![(); dimensions.0]; dimensions.1]
             .into_iter()
             .map(|row| row.into_iter().map(|_| default).collect())
@@ -36,24 +37,24 @@ where
             .collect::<Vec<usize>>()
             .chunks(dimensions.0)
             .into_iter()
-            .map(|chunk| chunk.iter().map(|_| C::random(rng)).collect())
+            .map(|chunk| chunk.iter().map(|_| Self::Cell::random(rng)).collect())
             .collect();
         Self::new(cells, dimensions)
     }
 
     /// Gets a shared referene to the grid of [BasicCell]s
-    fn cells(&self) -> &DoubleVec<C>;
+    fn cells(&self) -> &DoubleVec<Self::Cell>;
     /// Gets a mutable referene to the grid of [BasicCell]s
-    fn cells_mut(&mut self) -> &mut DoubleVec<C>;
+    fn cells_mut(&mut self) -> &mut DoubleVec<Self::Cell>;
 
     /// Given a [BasicWorld], return the changes to [BasicCell]s that
     /// would happned the *upcoming* tick and the [Index]s where they happened
-    fn changes(&self) -> Vec<(Index, C)>;
+    fn changes(&self) -> Vec<(Index, Self::Cell)>;
 
     /// Returns the dela that happened the previous [BasicWorld::tick]
-    fn delta(&self) -> &Vec<(Index, C)>;
+    fn delta(&self) -> &Vec<(Index, Self::Cell)>;
     /// Returns a mutable reference to that value
-    fn delta_mut(&mut self) -> &mut Vec<(Index, C)>;
+    fn delta_mut(&mut self) -> &mut Vec<(Index, Self::Cell)>;
 
     /// Get the dimensions of the world
     fn dimensions(&self) -> Dimensions;
@@ -100,7 +101,9 @@ mod test {
 
     struct World;
 
-    impl BasicWorld<Cell> for World {
+    impl BasicWorld for World {
+        type Cell = Cell;
+
         fn new(cells: DoubleVec<Cell>, dimensions: Dimensions) -> Self {
             todo!()
         }

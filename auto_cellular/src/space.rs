@@ -6,16 +6,15 @@ use crate::{
 
 /// A [Space] (like a Gui) where a [BasicWorld] can show its [BasicCell]s
 /// It only cares about learning how to lay the cells in the world
-pub trait Space<W, C, O>
+pub trait Space<W, O>
 where
-    C: BasicCell,
-    W: BasicWorld<C>,
-    O: OutputField<C, Self::CellRepr>,
+    W: BasicWorld,
+    O: OutputField<W::Cell, Self::CellRepr>,
 {
     /// The [Space]'s reprsentation of the [BasicCell]s in the [OutputField]
     type CellRepr;
     /// A pure [Fn] that takes a [BasicCell] and returns that its representation
-    type Reprer: Fn(C) -> Self::CellRepr;
+    type Reprer: Fn(W::Cell) -> Self::CellRepr;
 
     /// Get a mutable reference to the [BasicWorld] the [Space] manages
     fn world_mut(&mut self) -> &mut W;
