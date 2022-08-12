@@ -1,10 +1,12 @@
 [package]
+description = "Worlds implementing different rules for cellular automata"
 edition = "2021"
+license = "MIT"
 name = "auto_worlds"
 version = "0.1.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-auto_cellular = {path = "../auto_cellular"}
+auto_cellular = "*"
 rand = "0.8.5"

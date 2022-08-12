@@ -1,6 +1,8 @@
 [package]
 authors = ["Fady Adal <fady@uchicago.edu>"]
+description = "Glue enabling worlds to run in spaces"
 edition = "2021"
+license = "MIT"
 name = "auto_runner"
 version = "0.1.0"
 
