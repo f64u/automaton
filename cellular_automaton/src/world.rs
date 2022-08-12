@@ -1,5 +1,3 @@
-use itertools::Itertools;
-
 use crate::{
     cell::BasicCell,
     common::{Dimensions, DoubleVec, Index},
@@ -35,9 +33,10 @@ where
 
     fn new_random<R: rand::Rng + ?Sized>(rng: &mut R, dimensions: Dimensions) -> Self {
         let cells = (0..dimensions.0 * dimensions.1)
+            .collect::<Vec<usize>>()
             .chunks(dimensions.0)
             .into_iter()
-            .map(|chunk| chunk.map(|_| C::random(rng)).collect())
+            .map(|chunk| chunk.iter().map(|_| C::random(rng)).collect())
             .collect();
         Self::new(cells, dimensions)
     }
@@ -76,12 +75,66 @@ where
     }
 
     /// Returns the Moore Neihgbors for a given [BasicCell] at a given [Index] (x, y)
-    fn moore_neighbors(&self, (x, y): Index) -> Vec<&C> {
+    fn moore_neighbors(&self, p @ (x, y): Index) -> Vec<Index> {
         let (x, y) = (x as isize, y as isize);
-        (x.max(1) - 1..=(x + 1).min(self.dimensions().0 as isize - 1))
-            .cartesian_product(y.max(1) - 1..=(y + 1).min(self.dimensions().1 as isize - 1))
-            .filter(move |&item| item != (x, y))
-            .map(|(x, y)| &self.cells()[y as usize][x as usize])
+        let (w, h) = (self.dimensions().0 as isize, self.dimensions().1 as isize);
+
+        (-1..=1)
+            .map(|i| {
+                (-1..=1).map(move |j| {
+                    (
+                        (x + i).rem_euclid(w) as usize,
+                        (y + j).rem_euclid(h) as usize,
+                    )
+                })
+            })
+            .flatten()
+            .filter(move |&item| item != p)
             .collect()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::cell::test::Cell;
+
+    struct World;
+
+    impl BasicWorld<Cell> for World {
+        fn new(cells: DoubleVec<Cell>, dimensions: Dimensions) -> Self {
+            todo!()
+        }
+
+        fn cells(&self) -> &DoubleVec<Cell> {
+            todo!()
+        }
+
+        fn cells_mut(&mut self) -> &mut DoubleVec<Cell> {
+            todo!()
+        }
+
+        fn changes(&self) -> Vec<(Index, Cell)> {
+            todo!()
+        }
+
+        fn delta(&self) -> &Vec<(Index, Cell)> {
+            todo!()
+        }
+
+        fn delta_mut(&mut self) -> &mut Vec<(Index, Cell)> {
+            todo!()
+        }
+
+        fn dimensions(&self) -> Dimensions {
+            Dimensions(50, 50)
+        }
+    }
+
+    #[test]
+    fn moore_neighbors_works() {
+        let world = World;
+
+        println!("{:?}", world.moore_neighbors((49, 49)));
     }
 }

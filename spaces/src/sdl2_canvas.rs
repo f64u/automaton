@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use cellular_automaton::{
     cell::BasicCell,
@@ -157,7 +157,8 @@ where
     let mut event_dump = sdl_context.event_pump()?;
 
     let mut is_paused = true;
-
+    let mut i = 0;
+    let mut m: Duration = Duration::from_nanos(0);
     'running: loop {
         for event in event_dump.poll_iter() {
             match event {
@@ -220,11 +221,21 @@ where
         }
 
         if !is_paused {
-            gui.tick_whole()?
+            let now = Instant::now();
+            gui.tick_whole()?;
+            let d = now.elapsed();
+            m = m.max(d);
+            if i % 61 == 0 {
+                println!("{:?}", now.elapsed());
+            }
+
+            i += 1;
         }
 
         std::thread::sleep(Duration::from_millis(millis));
     }
+
+    println!("{:?}", m);
 
     Ok(())
 }

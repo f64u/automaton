@@ -7,5 +7,4 @@ version = "0.1.0"
 
 [dependencies]
 cellular_automaton = {path = "../cellular_automaton"}
-itertools = "0.10.3"
 rand = "0.8.5"

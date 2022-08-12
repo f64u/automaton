@@ -3,7 +3,6 @@ use cellular_automaton::{
     common::{linearize, Dimensions, DoubleVec, Index},
     world::BasicWorld,
 };
-use itertools::Itertools;
 
 use crate::PROPORTION;
 
@@ -60,18 +59,21 @@ impl BasicWorld<Cell> for World {
     fn changes(&self) -> Vec<(Index, Cell)> {
         let mut delta = vec![];
 
-        for p @ (i, j) in (0..self.dimensions().0).cartesian_product(0..self.dimensions().1) {
-            let count = self
-                .moore_neighbors(p)
-                .iter()
-                .filter(|c| matches!(***c, Cell::Alive))
-                .count();
-            let cell = &self.cells()[j][i];
-            match *cell {
-                Cell::Alive if !(2..=3).contains(&count) => delta.push(((i, j), Cell::Dead)),
+        for j in 0..self.dimensions().1 {
+            for i in 0..self.dimensions().0 {
+                let p = (i, j);
+                let count = self
+                    .moore_neighbors(p)
+                    .iter()
+                    .filter(|c| matches!(self.cells[c.1][c.0], Cell::Alive))
+                    .count();
+                let cell = &self.cells()[j][i];
+                match *cell {
+                    Cell::Alive if !(2..=3).contains(&count) => delta.push((p, Cell::Dead)),
 
-                Cell::Dead if count == 3 => delta.push(((i, j), Cell::Alive)),
-                _ => {}
+                    Cell::Dead if count == 3 => delta.push((p, Cell::Alive)),
+                    _ => {}
+                }
             }
         }
         delta
