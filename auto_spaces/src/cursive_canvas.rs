@@ -23,23 +23,21 @@ where
     fn show(&mut self) {}
 }
 
-struct Terminal<W, C>
+struct Terminal<W>
 where
-    W: BasicWorld<C>,
-    C: BasicCell,
+    W: BasicWorld,
 {
     world: W,
     output: Out,
-    reprer: fn(C) -> char,
+    reprer: fn(W::Cell) -> char,
 }
 
-impl<W, C> Space<W, C, Out> for Terminal<W, C>
+impl<W> Space<W, Out> for Terminal<W>
 where
-    C: BasicCell,
-    W: BasicWorld<C>,
+    W: BasicWorld,
 {
     type CellRepr = char;
-    type Reprer = fn(C) -> char;
+    type Reprer = fn(W::Cell) -> char;
     fn world_mut(&mut self) -> &mut W {
         &mut self.world
     }
@@ -57,12 +55,11 @@ where
     }
 }
 
-impl<W, C> Terminal<W, C>
+impl<W> Terminal<W>
 where
-    W: BasicWorld<C>,
-    C: BasicCell,
+    W: BasicWorld,
 {
-    fn new(world: W, output: Out, reprer: <Self as Space<W, C, Out>>::Reprer) -> Self {
+    fn new(world: W, output: Out, reprer: <Self as Space<W, Out>>::Reprer) -> Self {
         Self {
             world,
             output,
@@ -71,10 +68,9 @@ where
     }
 }
 
-pub fn run<W, C>(world: W, repr: fn(C) -> char, update_millis: usize) -> Result<(), String>
+pub fn run<W>(world: W, repr: fn(W::Cell) -> char, update_millis: usize) -> Result<(), String>
 where
-    W: BasicWorld<C> + Send + 'static,
-    C: BasicCell + Send + 'static,
+    W: BasicWorld + Send + 'static,
 {
     let mut siv = cursive::default();
     siv.set_autorefresh(true);

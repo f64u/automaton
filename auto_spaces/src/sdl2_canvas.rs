@@ -69,23 +69,21 @@ where
     }
 }
 
-struct Gui<'a, W, C>
+struct Gui<'a, W>
 where
-    C: BasicCell,
-    W: BasicWorld<C>,
+    W: BasicWorld,
 {
     world: W,
     output: Out<'a>,
-    reprer: fn(C) -> Color,
+    reprer: fn(W::Cell) -> Color,
 }
 
-impl<'a, W, C> Space<W, C, Out<'a>> for Gui<'a, W, C>
+impl<'a, W> Space<W, Out<'a>> for Gui<'a, W>
 where
-    C: BasicCell,
-    W: BasicWorld<C>,
+    W: BasicWorld,
 {
     type CellRepr = Color;
-    type Reprer = fn(C) -> Color;
+    type Reprer = fn(W::Cell) -> Color;
     fn world_mut(&mut self) -> &mut W {
         &mut self.world
     }
@@ -103,12 +101,11 @@ where
     }
 }
 
-impl<'a, W, C> Gui<'a, W, C>
+impl<'a, W> Gui<'a, W>
 where
-    C: BasicCell,
-    W: BasicWorld<C>,
+    W: BasicWorld,
 {
-    fn new(world: W, output: Out<'a>, reprer: fn(C) -> Color) -> Self {
+    fn new(world: W, output: Out<'a>, reprer: fn(W::Cell) -> Color) -> Self {
         Gui {
             world,
             output,
@@ -123,10 +120,14 @@ where
     }
 }
 
-pub fn run<W, C>(config: Config, world: W, title: &str, repr: fn(C) -> Color) -> Result<(), String>
+pub fn run<W>(
+    config: Config,
+    world: W,
+    title: &str,
+    repr: fn(W::Cell) -> Color,
+) -> Result<(), String>
 where
-    C: BasicCell,
-    W: BasicWorld<C>,
+    W: BasicWorld,
 {
     let mut millis = config.millis;
 

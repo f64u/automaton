@@ -30,23 +30,21 @@ where
     fn show(&mut self) {}
 }
 
-pub struct Browser<W, C>
+pub struct Browser<W>
 where
-    C: BasicCell,
-    W: BasicWorld<C>,
+    W: BasicWorld,
 {
     world: W,
     output: Colors,
-    reprer: fn(C) -> Color,
+    reprer: fn(W::Cell) -> Color,
 }
 
-impl<'a, W, C> Space<W, C, Colors> for Browser<W, C>
+impl<'a, W> Space<W, Colors> for Browser<W>
 where
-    C: BasicCell,
-    W: BasicWorld<C>,
+    W: BasicWorld,
 {
     type CellRepr = Color;
-    type Reprer = fn(C) -> Color;
+    type Reprer = fn(W::Cell) -> Color;
     fn world_mut(&mut self) -> &mut W {
         &mut self.world
     }
@@ -64,12 +62,11 @@ where
     }
 }
 
-impl<W, C> Browser<W, C>
+impl<W> Browser<W>
 where
-    C: BasicCell,
-    W: BasicWorld<C>,
+    W: BasicWorld,
 {
-    pub fn new(world: W, output: Colors, reprer: fn(C) -> Color) -> Self {
+    pub fn new(world: W, output: Colors, reprer: fn(W::Cell) -> Color) -> Self {
         Self {
             world,
             output,
@@ -78,14 +75,13 @@ where
     }
 }
 
-pub fn build_web<W, C>(
+pub fn build_web<W>(
     dimensions: Dimensions,
-    repr: fn(C) -> Color,
+    repr: fn(W::Cell) -> Color,
     pixel_size: usize,
-) -> Browser<W, C>
+) -> Browser<W>
 where
-    W: BasicWorld<C>,
-    C: BasicCell,
+    W: BasicWorld,
 {
     let mut rng = rand::thread_rng();
     let world = W::new_random(&mut rng, dimensions);
