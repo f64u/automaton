@@ -149,7 +149,9 @@ pub mod world {
         pub pattern: Vec<CellType>,
     }
 
-    impl BasicWorld<Cell> for World {
+    impl BasicWorld for World {
+        type Cell = Cell;
+
         fn new(mut cells: DoubleVec<Cell>, dimensions: Dimensions) -> Self {
             let mut ant_pos = None;
             'outer: for (j, row) in cells.iter().enumerate() {

@@ -38,7 +38,9 @@ pub struct World {
     delta: Vec<(Index, Cell)>,
 }
 
-impl BasicWorld<Cell> for World {
+impl BasicWorld for World {
+    type Cell = Cell;
+
     fn changes(&self) -> Vec<(Index, Cell)> {
         let mut delta = vec![];
 

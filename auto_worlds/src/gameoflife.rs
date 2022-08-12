@@ -38,7 +38,9 @@ pub struct World {
     delta: Vec<(Index, Cell)>,
 }
 
-impl BasicWorld<Cell> for World {
+impl BasicWorld for World {
+    type Cell = Cell;
+
     fn new(cells: DoubleVec<Cell>, dimensions: Dimensions) -> Self {
         let clone = cells.clone();
         Self {
