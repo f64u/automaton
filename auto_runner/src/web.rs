@@ -66,7 +66,7 @@ pub fn first_draw_brains() {
 }
 
 thread_local! {
-  static BROWSER: RefCell<Browser<BrainWorld, BrainCell>> = RefCell::new(build_web(Dimensions(CONFIG.width / CONFIG.pixel_size, CONFIG.height / CONFIG.pixel_size), |c| match c {
+  static BROWSER: RefCell<Browser<BrainWorld>> = RefCell::new(build_web(Dimensions(CONFIG.width / CONFIG.pixel_size, CONFIG.height / CONFIG.pixel_size), |c| match c {
       BrainCell::On => "white",
       BrainCell::Dying => "blue",
       BrainCell::Off => "black"
