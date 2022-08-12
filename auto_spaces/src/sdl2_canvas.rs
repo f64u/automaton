@@ -1,6 +1,6 @@
 use std::time::{Duration, Instant};
 
-use cellular_automaton::{
+use auto_cellular::{
     cell::BasicCell,
     common::{Dimensions, Index, ScreenPosition},
     space::{OutputField, Space},

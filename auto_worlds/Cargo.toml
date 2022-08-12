@@ -1,10 +1,10 @@
 [package]
 edition = "2021"
-name = "worlds"
+name = "auto_worlds"
 version = "0.1.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-cellular_automaton = {path = "../cellular_automaton"}
+auto_cellular = {path = "../auto_cellular"}
 rand = "0.8.5"

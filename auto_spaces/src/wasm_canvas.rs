@@ -1,4 +1,4 @@
-use cellular_automaton::{
+use auto_cellular::{
     cell::BasicCell,
     common::{Dimensions, Index},
     space::{OutputField, Space},

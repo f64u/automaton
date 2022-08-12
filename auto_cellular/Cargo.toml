@@ -2,7 +2,7 @@
 description = "Basic interface facilitating traits to implement a cellular automaton"
 edition = "2021"
 license = "MIT"
-name = "cellular_automaton"
+name = "auto_cellular"
 version = "0.1.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

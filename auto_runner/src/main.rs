@@ -1,6 +1,6 @@
-use ::worlds::Worlds;
+use auto_spaces::Spaces;
+use auto_worlds::Worlds;
 use clap::Parser;
-use spaces::Spaces;
 
 #[cfg(feature = "sdl2")]
 pub mod gui;
@@ -8,8 +8,6 @@ pub mod gui;
 pub mod terminal;
 #[cfg(feature = "wasm")]
 pub mod web;
-
-mod worlds;
 
 /// Simulate basic cellular automaton-based worlds
 #[derive(Parser, Debug)]
@@ -41,7 +39,7 @@ struct Args {
 }
 
 fn main() -> Result<(), String> {
-    use cellular_automaton::common::Dimensions;
+    use auto_cellular::common::Dimensions;
 
     let args = Args::parse();
 

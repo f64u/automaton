@@ -1,8 +1,8 @@
 [workspace]
 
 members = [
-  "worlds",
-  "cellular_automaton",
-  "spaces",
-  "automaton_runner",
+  "auto_worlds",
+  "auto_cellular",
+  "auto_spaces",
+  "auto_runner",
 ]

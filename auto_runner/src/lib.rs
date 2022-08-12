@@ -4,5 +4,3 @@ pub mod gui;
 pub mod terminal;
 #[cfg(feature = "wasm")]
 pub mod web;
-
-pub mod worlds;

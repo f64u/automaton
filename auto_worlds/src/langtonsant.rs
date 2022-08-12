@@ -1,5 +1,5 @@
 pub mod cell {
-    use cellular_automaton::cell::BasicCell;
+    use auto_cellular::cell::BasicCell;
     use rand::Rng;
 
     use crate::PROPORTION;
@@ -133,7 +133,7 @@ pub mod cell {
 }
 
 pub mod world {
-    use cellular_automaton::{
+    use auto_cellular::{
         common::{linearize, Dimensions, DoubleVec, Index},
         world::BasicWorld,
     };

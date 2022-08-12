@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use cellular_automaton::{
+use auto_cellular::{
     cell::BasicCell,
     common::{DoubleVec, Index},
     space::{OutputField, Space},

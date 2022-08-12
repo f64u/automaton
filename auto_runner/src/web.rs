@@ -1,10 +1,10 @@
 use std::cell::RefCell;
 
-use cellular_automaton::{common::Dimensions, space::Space};
-use spaces::wasm_canvas::{build_web, Browser};
+use auto_cellular::{common::Dimensions, space::Space};
+use auto_spaces::wasm_canvas::{build_web, Browser};
 
+use auto_worlds::briansbrain::{Cell as BrainCell, World as BrainWorld};
 use wasm_bindgen::prelude::wasm_bindgen;
-use worlds::briansbrain::{Cell as BrainCell, World as BrainWorld};
 
 #[wasm_bindgen]
 pub struct Config {

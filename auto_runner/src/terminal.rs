@@ -1,8 +1,8 @@
-use cellular_automaton::{common::Dimensions, world::BasicWorld};
+use auto_cellular::{common::Dimensions, world::BasicWorld};
 
-use spaces::cursive_canvas;
+use auto_spaces::cursive_canvas;
 
-use worlds::{
+use auto_worlds::{
     briansbrain::{Cell as BrainCell, World as BrainWorld},
     gameoflife::{Cell as LifeCell, World as LifeWorld},
     langtonsant::{

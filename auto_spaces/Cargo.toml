@@ -1,6 +1,6 @@
 [package]
 edition = "2021"
-name = "spaces"
+name = "auto_spaces"
 version = "0.1.0"
 
 [lib]
@@ -9,7 +9,7 @@ crate-type = ["cdylib", "lib"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-cellular_automaton = {path = "../cellular_automaton"}
+auto_cellular = {path = "../auto_cellular"}
 cursive = {version = "0.19.0", optional = true}
 getrandom = "0.2.7"
 rand = "0.8.5"
