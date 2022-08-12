@@ -3,9 +3,8 @@ use std::cell::RefCell;
 use cellular_automaton::{common::Dimensions, space::Space};
 use spaces::wasm_canvas::{build_web, Browser};
 
-use briansbrain::{cell::Cell as BrainCell, world::World as BrainWorld};
-// use gameoflife::{cell::Cell as LifeCell, world::World as LifeWorld};
 use wasm_bindgen::prelude::wasm_bindgen;
+use worlds::briansbrain::{Cell as BrainCell, World as BrainWorld};
 
 #[wasm_bindgen]
 pub struct Config {

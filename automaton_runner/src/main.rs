@@ -1,5 +1,6 @@
-use crate::worlds::{FrontEnds, Worlds};
+use ::worlds::Worlds;
 use clap::Parser;
+use spaces::Spaces;
 
 #[cfg(feature = "sdl2")]
 pub mod gui;
@@ -34,9 +35,9 @@ struct Args {
     #[clap(short, long)]
     world: Worlds,
 
-    /// the type of [FrontEnds] to use as canvas
+    /// the type of [Space] to use as canvas
     #[clap(short, long)]
-    frontend: FrontEnds,
+    frontend: Spaces,
 }
 
 fn main() -> Result<(), String> {
@@ -46,13 +47,13 @@ fn main() -> Result<(), String> {
 
     match args.frontend {
         #[cfg(feature = "cursive")]
-        FrontEnds::Cursive => terminal::run(
+        Spaces::Cursive => terminal::run(
             args.world,
             Dimensions(args.width, args.height),
             args.update_millis,
         ),
         #[cfg(feature = "sdl2")]
-        FrontEnds::Sdl2 => gui::run(
+        Spaces::Sdl2 => gui::run(
             args.world,
             Dimensions(args.width, args.height),
             args.cell_size,

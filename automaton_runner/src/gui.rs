@@ -1,14 +1,16 @@
-use briansbrain::{cell::Cell as BrainCell, world::World as BrainWorld};
 use cellular_automaton::{common::Dimensions, world::BasicWorld};
-use gameoflife::{cell::Cell as LifeCell, world::World as LifeWorld};
-use langtonsant::{
-    cell::{Cell as LangtonsCell, CellType, Color as CellColor},
-    world::World as LangtonsWorld,
-};
 use sdl2::pixels::Color;
 use spaces::sdl2_canvas::{self, Config};
+use worlds::{
+    briansbrain::{Cell as BrainCell, World as BrainWorld},
+    gameoflife::{Cell as LifeCell, World as LifeWorld},
+    langtonsant::{
+        cell::{Cell as LangtonsCell, CellType, Color as CellColor},
+        world::World as LangtonsWorld,
+    },
+};
 
-use crate::worlds::Worlds;
+use worlds::Worlds;
 
 pub fn run(
     world: Worlds,

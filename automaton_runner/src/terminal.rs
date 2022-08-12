@@ -2,14 +2,15 @@ use cellular_automaton::{common::Dimensions, world::BasicWorld};
 
 use spaces::cursive_canvas;
 
-use briansbrain::{cell::Cell as BrainCell, world::World as BrainWorld};
-use gameoflife::{cell::Cell as LifeCell, world::World as LifeWorld};
-use langtonsant::{
-    cell::{Cell as LangtonsCell, CellType, Color, Direction},
-    world::World as LangtonsWorld,
+use worlds::{
+    briansbrain::{Cell as BrainCell, World as BrainWorld},
+    gameoflife::{Cell as LifeCell, World as LifeWorld},
+    langtonsant::{
+        cell::{Cell as LangtonsCell, CellType, Color, Direction},
+        world::World as LangtonsWorld,
+    },
+    Worlds,
 };
-
-use crate::worlds::Worlds;
 
 pub fn run(world: Worlds, dimensions: Dimensions, update_millis: usize) -> Result<(), String> {
     let mut rng = rand::thread_rng();
