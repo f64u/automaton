@@ -23,5 +23,6 @@ wasm-bindgen = {version = "0.2.82", optional = true}
 
 [features]
 cursive = ["dep:cursive", "dep:clap", "auto_spaces/cursive"]
+default = ["cursive"]
 sdl2 = ["dep:sdl2", "dep:clap", "auto_spaces/sdl2"]
 wasm = ["dep:wasm-bindgen", "auto_spaces/wasm"]
