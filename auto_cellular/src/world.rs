@@ -104,7 +104,7 @@ mod test {
     impl BasicWorld for World {
         type Cell = Cell;
 
-        fn new(cells: DoubleVec<Cell>, dimensions: Dimensions) -> Self {
+        fn new(_cells: DoubleVec<Cell>, _dimensions: Dimensions) -> Self {
             todo!()
         }
 

@@ -39,7 +39,7 @@ where
     reprer: fn(W::Cell) -> Color,
 }
 
-impl<'a, W> Space<W, Colors> for Browser<W>
+impl<W> Space<W, Colors> for Browser<W>
 where
     W: BasicWorld,
 {
@@ -85,13 +85,12 @@ where
 {
     let mut rng = rand::thread_rng();
     let world = W::new_random(&mut rng, dimensions);
-    let output = Browser::new(
+    Browser::new(
         world,
         OutputManager {
             field: (),
             pixel_size,
         },
         repr,
-    );
-    output
+    )
 }
