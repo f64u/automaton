@@ -3,6 +3,10 @@ use crate::{
     common::{Dimensions, DoubleVec, Index},
 };
 
+pub trait WorldConfig {
+    fn dimensions(&self) -> Dimensions;
+}
+
 /// A given [BasicWorld] knows how to go from one state of [BasicCell] to the next on each
 /// tick by provding a [BasicWorld::changes] method
 pub trait BasicWorld
@@ -11,35 +15,38 @@ where
 {
     /// Type of [BasicCell] this world manages
     type Cell: BasicCell;
+    /// Type of [WorldConfig] this world takes
+    type Config: WorldConfig;
+
     /// Gives a blank [BasicWorld] of the same configuration as the original world
     fn blank(&self) -> Self {
-        Self::new_blank(self.dimensions())
+        Self::new_blank(self.config())
     }
 
     /// Gives a random [BasicWorld] of the same configuration as the original world
     fn random<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> Self {
-        Self::new_random(rng, self.dimensions())
+        Self::new_random(rng, self.config())
     }
 
     /// Constaruct a new [BasicWorld]
-    fn new(cells: DoubleVec<Self::Cell>, dimensions: Dimensions) -> Self;
-    fn new_blank(dimensions: Dimensions) -> Self {
+    fn new(cells: DoubleVec<Self::Cell>, config: Self::Config) -> Self;
+    fn new_blank(config: Self::Config) -> Self {
         let default = Self::Cell::default();
-        let cells = vec![vec![(); dimensions.0]; dimensions.1]
+        let cells = vec![vec![(); config.dimensions().0]; config.dimensions().1]
             .into_iter()
             .map(|row| row.into_iter().map(|_| default).collect())
             .collect();
-        Self::new(cells, dimensions)
+        Self::new(cells, config)
     }
 
-    fn new_random<R: rand::Rng + ?Sized>(rng: &mut R, dimensions: Dimensions) -> Self {
-        let cells = (0..dimensions.0 * dimensions.1)
+    fn new_random<R: rand::Rng + ?Sized>(rng: &mut R, config: Self::Config) -> Self {
+        let cells = (0..config.dimensions().0 * config.dimensions().1)
             .collect::<Vec<usize>>()
-            .chunks(dimensions.0)
+            .chunks(config.dimensions().0)
             .into_iter()
             .map(|chunk| chunk.iter().map(|_| Self::Cell::random(rng)).collect())
             .collect();
-        Self::new(cells, dimensions)
+        Self::new(cells, config)
     }
 
     /// Gets a shared referene to the grid of [BasicCell]s
@@ -57,7 +64,7 @@ where
     fn delta_mut(&mut self) -> &mut Vec<(Index, Self::Cell)>;
 
     /// Get the dimensions of the world
-    fn dimensions(&self) -> Dimensions;
+    fn config(&self) -> Self::Config;
 
     /// Commit the [BasicWorld::changes] to memory
     fn tick(&mut self) {
@@ -78,7 +85,7 @@ where
     /// Returns the Moore Neihgbors for a given [BasicCell] at a given [Index] (x, y)
     fn moore_neighbors(&self, p @ (x, y): Index) -> Vec<Index> {
         let (x, y) = (x as isize, y as isize);
-        let (w, h) = (self.dimensions().0 as isize, self.dimensions().1 as isize);
+        let (w, h) = (self.config().dimensions().0 as isize, self.config().dimensions().1 as isize);
 
         (-1..=1)
             .flat_map(|i| {
@@ -100,11 +107,19 @@ mod test {
     use crate::cell::test::Cell;
 
     struct World;
+    struct Config;
+    
+    impl WorldConfig for Config {
+        fn dimensions(&self) -> Dimensions {
+            Dimensions(50, 50)
+        }
+    }
 
     impl BasicWorld for World {
         type Cell = Cell;
+        type Config = Config;
 
-        fn new(_cells: DoubleVec<Cell>, _dimensions: Dimensions) -> Self {
+        fn new(_cells: DoubleVec<Cell>, _config: Config) -> Self {
             todo!()
         }
 
@@ -128,8 +143,8 @@ mod test {
             todo!()
         }
 
-        fn dimensions(&self) -> Dimensions {
-            Dimensions(50, 50)
+        fn config(&self) -> Config {
+            Config
         }
     }
 
