@@ -1,31 +1,26 @@
 use crate::{
-    cell::BasicCell,
+    cell::CellLike,
     common::{Dimensions, DoubleVec, Index},
 };
 
-pub trait WorldConfig {
-    fn dimensions(&self) -> Dimensions;
+pub trait WorldConfig: Clone {
+    fn dimensions(&self) -> &Dimensions;
 }
 
 /// A given [BasicWorld] knows how to go from one state of [BasicCell] to the next on each
 /// tick by provding a [BasicWorld::changes] method
-pub trait BasicWorld
+pub trait WorldLike
 where
     Self: Sized,
 {
     /// Type of [BasicCell] this world manages
-    type Cell: BasicCell;
+    type Cell: CellLike;
     /// Type of [WorldConfig] this world takes
     type Config: WorldConfig;
 
     /// Gives a blank [BasicWorld] of the same configuration as the original world
     fn blank(&self) -> Self {
-        Self::new_blank(self.config())
-    }
-
-    /// Gives a random [BasicWorld] of the same configuration as the original world
-    fn random<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> Self {
-        Self::new_random(rng, self.config())
+        Self::new_blank(self.config().clone())
     }
 
     /// Constaruct a new [BasicWorld]
@@ -63,8 +58,8 @@ where
     /// Returns a mutable reference to that value
     fn delta_mut(&mut self) -> &mut Vec<(Index, Self::Cell)>;
 
-    /// Get the dimensions of the world
-    fn config(&self) -> Self::Config;
+    /// Get the config of the world
+    fn config(&self) -> &Self::Config;
 
     /// Commit the [BasicWorld::changes] to memory
     fn tick(&mut self) {
@@ -85,7 +80,10 @@ where
     /// Returns the Moore Neihgbors for a given [BasicCell] at a given [Index] (x, y)
     fn moore_neighbors(&self, p @ (x, y): Index) -> Vec<Index> {
         let (x, y) = (x as isize, y as isize);
-        let (w, h) = (self.config().dimensions().0 as isize, self.config().dimensions().1 as isize);
+        let (w, h) = (
+            self.config().dimensions().0 as isize,
+            self.config().dimensions().1 as isize,
+        );
 
         (-1..=1)
             .flat_map(|i| {
@@ -107,15 +105,16 @@ mod test {
     use crate::cell::test::Cell;
 
     struct World;
+    #[derive(Debug, Clone)]
     struct Config;
-    
+
     impl WorldConfig for Config {
-        fn dimensions(&self) -> Dimensions {
-            Dimensions(50, 50)
+        fn dimensions(&self) -> &Dimensions {
+            &Dimensions(50, 50)
         }
     }
 
-    impl BasicWorld for World {
+    impl WorldLike for World {
         type Cell = Cell;
         type Config = Config;
 
@@ -143,8 +142,8 @@ mod test {
             todo!()
         }
 
-        fn config(&self) -> Config {
-            Config
+        fn config(&self) -> &Config {
+            &Config
         }
     }
 

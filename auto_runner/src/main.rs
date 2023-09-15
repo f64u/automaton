@@ -1,5 +1,5 @@
-use auto_spaces::Spaces;
-use auto_worlds::Worlds;
+use auto_spaces::SpaceKind;
+use auto_worlds::WorldKind;
 use clap::Parser;
 
 #[cfg(feature = "sdl2")]
@@ -31,11 +31,11 @@ struct Args {
 
     /// The type of [Worlds] to simulate
     #[clap(short, long)]
-    world: Worlds,
+    world: WorldKind,
 
     /// the type of [Space] to use as canvas
     #[clap(short, long)]
-    frontend: Spaces,
+    frontend: SpaceKind,
 }
 
 fn main() -> Result<(), String> {
@@ -45,13 +45,13 @@ fn main() -> Result<(), String> {
 
     match args.frontend {
         #[cfg(feature = "cursive")]
-        Spaces::Cursive => terminal::run(
+        SpaceKind::Cursive => terminal::run(
             args.world,
             Dimensions(args.width, args.height),
             args.update_millis,
         ),
         #[cfg(feature = "sdl2")]
-        Spaces::Sdl2 => gui::run(
+        SpaceKind::Sdl2 => gui::run(
             args.world,
             Dimensions(args.width, args.height),
             args.cell_size,

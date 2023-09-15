@@ -1,8 +1,9 @@
-use rand::prelude::*;
 use std::hash::Hash;
 
+use rand::Rng;
+
 /// A cell that knows how to get its next state and a random verion of its type
-pub trait BasicCell: Default + Clone + Copy + Hash + Eq {
+pub trait CellLike: Default + Clone + Copy + Hash + Eq {
     fn next_state(&self) -> Self;
     fn random<R: Rng + ?Sized>(rng: &mut R) -> Self;
 }
@@ -14,7 +15,7 @@ pub(crate) mod test {
     #[derive(Default, Clone, Copy, Debug, Hash, Eq, PartialEq)]
     pub(crate) struct Cell;
 
-    impl BasicCell for Cell {
+    impl CellLike for Cell {
         fn next_state(&self) -> Self {
             Cell
         }

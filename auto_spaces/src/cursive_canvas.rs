@@ -1,10 +1,10 @@
 use std::time::Duration;
 
 use auto_cellular::{
-    cell::BasicCell,
+    cell::CellLike,
     common::{DoubleVec, Index},
-    space::{OutputField, Space},
-    world::BasicWorld,
+    space::{OutputField, SpaceLike},
+    world::{WorldConfig, WorldLike},
 };
 use cursive::views::{LinearLayout, TextContent, TextView};
 
@@ -14,7 +14,7 @@ type Out = OutputManager<DoubleVec<TextContent>>;
 
 impl<C> OutputField<C, char> for Out
 where
-    C: BasicCell,
+    C: CellLike,
 {
     fn set_unit(&mut self, (x, y): Index, unit: char, _refresh: bool) -> Result<(), String> {
         self.field[y][x].set_content(unit);
@@ -25,16 +25,16 @@ where
 
 struct Terminal<W>
 where
-    W: BasicWorld,
+    W: WorldLike,
 {
     world: W,
     output: Out,
     reprer: fn(W::Cell) -> char,
 }
 
-impl<W> Space<W, Out> for Terminal<W>
+impl<W> SpaceLike<W, Out> for Terminal<W>
 where
-    W: BasicWorld,
+    W: WorldLike,
 {
     type CellRepr = char;
     type Reprer = fn(W::Cell) -> char;
@@ -57,9 +57,9 @@ where
 
 impl<W> Terminal<W>
 where
-    W: BasicWorld,
+    W: WorldLike,
 {
-    fn new(world: W, output: Out, reprer: <Self as Space<W, Out>>::Reprer) -> Self {
+    fn new(world: W, output: Out, reprer: <Self as SpaceLike<W, Out>>::Reprer) -> Self {
         Self {
             world,
             output,
@@ -70,15 +70,16 @@ where
 
 pub fn run<W>(world: W, repr: fn(W::Cell) -> char, update_millis: usize) -> Result<(), String>
 where
-    W: BasicWorld + Send + 'static,
+    W: WorldLike + Send + 'static,
 {
     let mut siv = cursive::default();
     siv.set_autorefresh(true);
 
-    let texts: Vec<Vec<TextContent>> = vec![vec![(); world.dimensions().0]; world.dimensions().1]
-        .into_iter()
-        .map(|r| r.into_iter().map(|_| TextContent::new("")).collect())
-        .collect();
+    let texts: Vec<Vec<TextContent>> =
+        vec![vec![(); world.config().dimensions().0]; world.config().dimensions().1]
+            .into_iter()
+            .map(|r| r.into_iter().map(|_| TextContent::new("")).collect())
+            .collect();
     let textboxes = texts.iter().map(|row| {
         let mut layout_row = LinearLayout::horizontal();
         for child in row

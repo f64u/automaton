@@ -1,12 +1,12 @@
 use auto_cellular::{
-    cell::BasicCell,
+    cell::CellLike,
     common::{linearize, Dimensions, DoubleVec, Index},
-    world::BasicWorld,
+    world::{WorldConfig, WorldLike},
 };
 
 use crate::PROPORTION;
 
-#[derive(Clone, Default, Copy)]
+#[derive(Clone, Default, Copy, PartialEq, Eq, Hash)]
 pub enum Cell {
     Alive,
 
@@ -14,7 +14,7 @@ pub enum Cell {
     Dead,
 }
 
-impl BasicCell for Cell {
+impl CellLike for Cell {
     fn next_state(&self) -> Self {
         match *self {
             Cell::Alive => Cell::Dead,
@@ -32,20 +32,32 @@ impl BasicCell for Cell {
     }
 }
 
+#[derive(Clone)]
+pub struct WConfig {
+    pub dimensions: Dimensions,
+}
+
+impl WorldConfig for WConfig {
+    fn dimensions(&self) -> &Dimensions {
+        &self.dimensions
+    }
+}
+
 pub struct World {
     cells: DoubleVec<Cell>,
-    dimensions: Dimensions,
+    config: WConfig,
     delta: Vec<(Index, Cell)>,
 }
 
-impl BasicWorld for World {
+impl WorldLike for World {
     type Cell = Cell;
+    type Config = WConfig;
 
-    fn new(cells: DoubleVec<Cell>, dimensions: Dimensions) -> Self {
+    fn new(cells: DoubleVec<Cell>, config: Self::Config) -> Self {
         let clone = cells.clone();
         Self {
             cells,
-            dimensions,
+            config,
             delta: linearize(clone),
         }
     }
@@ -61,8 +73,8 @@ impl BasicWorld for World {
     fn changes(&self) -> Vec<(Index, Cell)> {
         let mut delta = vec![];
 
-        for j in 0..self.dimensions().1 {
-            for i in 0..self.dimensions().0 {
+        for j in 0..self.config().dimensions().1 {
+            for i in 0..self.config().dimensions().0 {
                 let p = (i, j);
                 let count = self
                     .moore_neighbors(p)
@@ -89,7 +101,7 @@ impl BasicWorld for World {
         &mut self.delta
     }
 
-    fn dimensions(&self) -> Dimensions {
-        self.dimensions
+    fn config(&self) -> &Self::Config {
+        &self.config
     }
 }

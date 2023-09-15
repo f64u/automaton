@@ -1,50 +1,47 @@
-use auto_cellular::{common::Dimensions, world::BasicWorld};
+use auto_cellular::{common::Dimensions, world::WorldLike};
 
 use auto_spaces::cursive_canvas;
 
-use auto_worlds::{
-    briansbrain::{Cell as BrainCell, World as BrainWorld},
-    gameoflife::{Cell as LifeCell, World as LifeWorld},
-    langtonsant::{
-        cell::{Cell as LangtonsCell, CellType, Color, Direction},
-        world::World as LangtonsWorld,
-    },
-    Worlds,
-};
+use auto_worlds::WorldKind;
 
-pub fn run(world: Worlds, dimensions: Dimensions, update_millis: usize) -> Result<(), String> {
+pub fn run(world: WorldKind, dimensions: Dimensions, update_millis: usize) -> Result<(), String> {
     let mut rng = rand::thread_rng();
     match world {
-        Worlds::GameOfLife => {
-            let world = LifeWorld::new_random(&mut rng, dimensions);
+        WorldKind::GameOfLife => {
+            use auto_worlds::gameoflife::{Cell, WConfig, World};
+            let world = World::new_random(&mut rng, WConfig { dimensions });
 
             cursive_canvas::run(
                 world,
                 |c| match c {
-                    LifeCell::Alive => '#',
-                    LifeCell::Dead => ' ',
+                    Cell::Alive => '#',
+                    Cell::Dead => ' ',
                 },
                 update_millis,
             )?;
         }
-        Worlds::BriansBrain => {
-            let world = BrainWorld::new_random(&mut rng, dimensions);
+        WorldKind::BriansBrain => {
+            use auto_worlds::briansbrain::{Cell, WConfig, World};
+            let world = World::new_random(&mut rng, WConfig { dimensions });
             cursive_canvas::run(
                 world,
                 |c| match c {
-                    BrainCell::On => 'O',
-                    BrainCell::Dying => '*',
-                    BrainCell::Off => ' ',
+                    Cell::On => 'O',
+                    Cell::Dying => '*',
+                    Cell::Off => ' ',
                 },
                 update_millis,
             )?;
         }
-        Worlds::LangtonsAnt => {
-            let mut rng = rand::thread_rng();
-            use CellType::*;
-            let world = LangtonsWorld::random_with_pattern_of(
+        WorldKind::LangtonsAnt => {
+            use auto_worlds::langtonsant::{
+                cell::{Cell, CellType::*, Color, Direction},
+                world::{WConfig, World},
+            };
+
+            let world = World::random_with_pattern_of(
                 &mut rng,
-                dimensions,
+                WConfig { dimensions },
                 //vec![CCW, CW, CW, CW, CW, CW, CCW, CCW, CW],
                 vec![CCW, CCW, CW, CW],
             );
@@ -56,13 +53,13 @@ pub fn run(world: Worlds, dimensions: Dimensions, update_millis: usize) -> Resul
                 |c| {
                     let colors = "!\"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~";
                     match c {
-                        LangtonsCell::Ant(d, _) => match d {
+                        Cell::Ant(d, _) => match d {
                             Direction::Left => '⇦',
                             Direction::Right => '⇨',
                             Direction::Up => '⇧',
                             Direction::Down => '⇩',
                         },
-                        LangtonsCell::Color(Color { value, .. }) => {
+                        Cell::Color(Color { value, .. }) => {
                             colors.chars().nth(value).unwrap_or('?')
                         }
                     }

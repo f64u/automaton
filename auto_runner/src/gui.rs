@@ -1,18 +1,10 @@
-use auto_cellular::{common::Dimensions, world::BasicWorld};
+use auto_cellular::{common::Dimensions, world::WorldLike};
 use auto_spaces::sdl2_canvas::{self, Config};
-use auto_worlds::{
-    briansbrain::{Cell as BrainCell, World as BrainWorld},
-    gameoflife::{Cell as LifeCell, World as LifeWorld},
-    langtonsant::{
-        cell::{Cell as LangtonsCell, CellType, Color as CellColor},
-        world::World as LangtonsWorld,
-    },
-    Worlds,
-};
+use auto_worlds::WorldKind;
 use sdl2::pixels::Color;
 
 pub fn run(
-    world: Worlds,
+    world: WorldKind,
     window_dimensions: Dimensions,
     pixel_size: usize,
     update_millis: usize,
@@ -26,28 +18,40 @@ pub fn run(
     let config = Config::new(window_dimensions, pixel_size, update_millis as u64);
 
     match world {
-        Worlds::GameOfLife => {
-            let world = LifeWorld::new_random(&mut rng, world_dimensions);
+        WorldKind::GameOfLife => {
+            use auto_worlds::gameoflife::{Cell, WConfig, World};
+            let world_config = WConfig {
+                dimensions: world_dimensions,
+            };
+            let world = World::new_random(&mut rng, world_config);
             sdl2_canvas::run(config, world, "Game of Life", |c| match c {
-                LifeCell::Alive => Color::RGB(248, 90, 202),
-                LifeCell::Dead => Color::RGB(16, 7, 32),
+                Cell::Alive => Color::RGB(248, 90, 202),
+                Cell::Dead => Color::RGB(16, 7, 32),
             })?;
         }
-        Worlds::BriansBrain => {
-            let world = BrainWorld::new_random(&mut rng, world_dimensions);
+        WorldKind::BriansBrain => {
+            use auto_worlds::briansbrain::{Cell, WConfig, World};
+            let world_config = WConfig {
+                dimensions: world_dimensions,
+            };
+            let world = World::new_random(&mut rng, world_config);
             sdl2_canvas::run(config, world, "Brian's Brian", |c| match c {
-                BrainCell::On => Color::RGB(255, 229, 180),
-                BrainCell::Dying => Color::RGB(31, 70, 144),
-                BrainCell::Off => Color::RGB(35, 25, 85),
+                Cell::On => Color::RGB(255, 229, 180),
+                Cell::Dying => Color::RGB(31, 70, 144),
+                Cell::Off => Color::RGB(35, 25, 85),
             })?;
         }
-        Worlds::LangtonsAnt => {
+        WorldKind::LangtonsAnt => {
+            use auto_worlds::langtonsant::{
+                cell::{Cell, CellType, Color as CellColor},
+                world::{WConfig, World},
+            };
             use CellType::*;
-            let world = LangtonsWorld::random_with_pattern_of(
-                &mut rng,
-                world_dimensions,
-                vec![CCW, CCW, CW, CW],
-            );
+            let world_config = WConfig {
+                dimensions: world_dimensions,
+            };
+            let world =
+                World::random_with_pattern_of(&mut rng, world_config, vec![CCW, CCW, CW, CW]);
             println!("{:?}", world.pattern);
 
             sdl2_canvas::run(config, world, "Langton's Ant", |c| {
@@ -65,8 +69,8 @@ pub fn run(
                 ];
 
                 match c {
-                    LangtonsCell::Ant(_, _) => Color::RED,
-                    LangtonsCell::Color(CellColor { value, .. }) => colors[value],
+                    Cell::Ant(_, _) => Color::RED,
+                    Cell::Color(CellColor { value, .. }) => colors[value],
                 }
             })?;
         }

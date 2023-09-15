@@ -1,10 +1,10 @@
 pub mod cell {
-    use auto_cellular::cell::BasicCell;
+    use auto_cellular::cell::CellLike;
     use rand::Rng;
 
     use crate::PROPORTION;
 
-    #[derive(Clone, Copy, Debug)]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
     pub enum Direction {
         Left,
         Right,
@@ -32,13 +32,13 @@ pub mod cell {
         }
     }
 
-    #[derive(Clone, Copy, Debug)]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
     pub enum CellType {
         CW,
         CCW,
     }
 
-    #[derive(Clone, Copy, Debug)]
+    #[derive(Clone, Copy, Debug, Hash, Eq, PartialEq)]
     pub struct Color {
         pub cell_type: CellType,
         pub value: usize,
@@ -53,7 +53,7 @@ pub mod cell {
         }
     }
 
-    #[derive(Clone, Copy, Debug)]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
     pub enum Cell {
         Color(Color),
         Ant(Direction, Color),
@@ -84,7 +84,7 @@ pub mod cell {
         }
     }
 
-    impl BasicCell for Cell {
+    impl CellLike for Cell {
         fn next_state(&self) -> Self {
             match *self {
                 Self::Ant(d, c) => {
@@ -120,22 +120,12 @@ pub mod cell {
             }
         }
     }
-
-    impl Cell {
-        pub fn random_with_pattern<R: Rng + ?Sized>(rng: &mut R, pattern: &Vec<CellType>) -> Self {
-            let v = rng.gen_range(0..pattern.len());
-            Self::Color(Color {
-                value: v,
-                cell_type: pattern[v],
-            })
-        }
-    }
 }
 
 pub mod world {
     use auto_cellular::{
         common::{linearize, Dimensions, DoubleVec, Index},
-        world::BasicWorld,
+        world::{WorldConfig, WorldLike},
     };
     use rand::Rng;
 
@@ -143,16 +133,28 @@ pub mod world {
 
     pub struct World {
         cells: DoubleVec<Cell>,
-        dimensions: Dimensions,
+        config: WConfig,
         delta: Vec<(Index, Cell)>,
         ant_pos: Index,
         pub pattern: Vec<CellType>,
     }
 
-    impl BasicWorld for World {
-        type Cell = Cell;
+    #[derive(Clone)]
+    pub struct WConfig {
+        pub dimensions: Dimensions,
+    }
 
-        fn new(mut cells: DoubleVec<Cell>, dimensions: Dimensions) -> Self {
+    impl WorldConfig for WConfig {
+        fn dimensions(&self) -> &Dimensions {
+            &self.dimensions
+        }
+    }
+
+    impl WorldLike for World {
+        type Cell = Cell;
+        type Config = WConfig;
+
+        fn new(mut cells: DoubleVec<Cell>, config: Self::Config) -> Self {
             let mut ant_pos = None;
             'outer: for (j, row) in cells.iter().enumerate() {
                 for (i, c) in row.iter().enumerate() {
@@ -164,7 +166,7 @@ pub mod world {
             }
 
             if ant_pos.is_none() {
-                ant_pos = Some((dimensions.0 / 2, dimensions.1 / 2));
+                ant_pos = Some((config.dimensions().0 / 2, config.dimensions().1 / 2));
                 let ant_pos = ant_pos.unwrap();
                 let c = &mut cells[ant_pos.1][ant_pos.0];
                 *c = c.to_ant();
@@ -174,7 +176,7 @@ pub mod world {
 
             Self {
                 cells,
-                dimensions,
+                config,
                 delta,
                 ant_pos: ant_pos.unwrap(),
                 pattern: vec![CellType::CW, CellType::CCW],
@@ -207,13 +209,17 @@ pub mod world {
                 };
 
                 let new_ant_pos = match new_direction {
-                    Direction::Right => {
-                        ((self.ant_pos.0 + 1) % self.dimensions().0, self.ant_pos.1)
-                    }
-                    Direction::Down => (self.ant_pos.0, (self.ant_pos.1 + 1) % self.dimensions().1),
+                    Direction::Right => (
+                        (self.ant_pos.0 + 1) % self.config().dimensions().0,
+                        self.ant_pos.1,
+                    ),
+                    Direction::Down => (
+                        self.ant_pos.0,
+                        (self.ant_pos.1 + 1) % self.config().dimensions().1,
+                    ),
                     Direction::Left => (
                         if self.ant_pos.0 == 0 {
-                            self.dimensions().0 - 1
+                            self.config().dimensions().0 - 1
                         } else {
                             self.ant_pos.0 - 1
                         },
@@ -222,7 +228,7 @@ pub mod world {
                     Direction::Up => (
                         self.ant_pos.0,
                         if self.ant_pos.1 == 0 {
-                            self.dimensions().1 - 1
+                            self.config().dimensions().1 - 1
                         } else {
                             self.ant_pos.1 - 1
                         },
@@ -252,10 +258,6 @@ pub mod world {
             &mut self.delta
         }
 
-        fn dimensions(&self) -> Dimensions {
-            self.dimensions
-        }
-
         fn tick(&mut self) {
             let delta = self.changes();
             assert_eq!(delta.len(), 2);
@@ -274,40 +276,31 @@ pub mod world {
                 cell_type: self.pattern[0],
             });
             Self::new_with_pattern(
-                vec![vec![default; self.dimensions().0]; self.dimensions().1],
-                self.dimensions(),
+                vec![vec![default; self.config().dimensions().0]; self.config().dimensions().1],
+                self.config().clone(),
                 self.pattern.clone(),
             )
         }
 
-        fn random<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> Self {
-            let cells = vec![vec![(); self.dimensions().0]; self.dimensions().1]
-                .into_iter()
-                .map(|row| {
-                    row.into_iter()
-                        .map(|_| Cell::random_with_pattern(rng, &self.pattern))
-                        .collect()
-                })
-                .collect();
-
-            Self::new_with_pattern(cells, self.dimensions(), self.pattern.clone())
+        fn config(&self) -> &Self::Config {
+            &self.config
         }
     }
 
     impl World {
         pub fn new_with_pattern(
             cells: DoubleVec<Cell>,
-            dimensions: Dimensions,
+            config: WConfig,
             pattern: Vec<CellType>,
         ) -> Self {
-            let mut w = Self::new(cells, dimensions);
+            let mut w = Self::new(cells, config);
             w.pattern = pattern;
             w
         }
 
         pub fn random_with_pattern_of_length<R: Rng + ?Sized>(
             rng: &mut R,
-            dimensions: Dimensions,
+            config: WConfig,
             n: usize,
         ) -> Self {
             let mut pattern = Vec::with_capacity(n);
@@ -320,18 +313,18 @@ pub mod world {
                 }
             }
 
-            Self::random_with_pattern_of(rng, dimensions, pattern)
+            Self::random_with_pattern_of(rng, config.clone(), pattern)
         }
 
         pub fn random_with_pattern_of<R: Rng + ?Sized>(
             rng: &mut R,
-            dimensions: Dimensions,
+            config: WConfig,
             pattern: Vec<CellType>,
         ) -> Self {
-            let mut cells = Vec::with_capacity(dimensions.1);
-            for _ in 0..dimensions.1 {
-                let mut row = Vec::with_capacity(dimensions.0);
-                for _ in 0..dimensions.0 {
+            let mut cells = Vec::with_capacity(config.dimensions().1);
+            for _ in 0..config.dimensions().1 {
+                let mut row = Vec::with_capacity(config.dimensions().0);
+                for _ in 0..config.dimensions().0 {
                     let v = rng.gen_range(0..pattern.len());
                     row.push(Cell::Color(Color {
                         value: v,
@@ -341,7 +334,7 @@ pub mod world {
                 cells.push(row);
             }
 
-            Self::new_with_pattern(cells, dimensions, pattern)
+            Self::new_with_pattern(cells, config, pattern)
         }
     }
 }

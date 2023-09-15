@@ -1,10 +1,10 @@
 use std::time::{Duration, Instant};
 
 use auto_cellular::{
-    cell::BasicCell,
-    common::{Dimensions, Index, ScreenPosition},
-    space::{OutputField, Space},
-    world::BasicWorld,
+    cell::CellLike,
+    common::{Dimensions, Index},
+    space::{OutputField, SpaceLike},
+    world::WorldLike,
 };
 use sdl2::{
     event::Event, keyboard::Keycode, pixels::Color, rect::Rect, render::Canvas, video::Window,
@@ -35,7 +35,7 @@ impl Config {
         self.dimensions.1 as usize / self.pixel_size
     }
 
-    pub fn downscale(&self, (x, y): ScreenPosition) -> Index {
+    pub fn downscale(&self, (x, y): (isize, isize)) -> Index {
         (x as usize / self.pixel_size, y as usize / self.pixel_size)
     }
 }
@@ -44,7 +44,7 @@ type Out<'a> = OutputManager<&'a mut Canvas<Window>>;
 
 impl<'a, C> OutputField<C, Color> for Out<'a>
 where
-    C: BasicCell,
+    C: CellLike,
 {
     fn set_unit(&mut self, (x, y): Index, unit: Color, refresh: bool) -> Result<(), String> {
         let rect = Rect::new(
@@ -71,16 +71,16 @@ where
 
 struct Gui<'a, W>
 where
-    W: BasicWorld,
+    W: WorldLike,
 {
     world: W,
     output: Out<'a>,
     reprer: fn(W::Cell) -> Color,
 }
 
-impl<'a, W> Space<W, Out<'a>> for Gui<'a, W>
+impl<'a, W> SpaceLike<W, Out<'a>> for Gui<'a, W>
 where
-    W: BasicWorld,
+    W: WorldLike,
 {
     type CellRepr = Color;
     type Reprer = fn(W::Cell) -> Color;
@@ -103,7 +103,7 @@ where
 
 impl<'a, W> Gui<'a, W>
 where
-    W: BasicWorld,
+    W: WorldLike,
 {
     fn new(world: W, output: Out<'a>, reprer: fn(W::Cell) -> Color) -> Self {
         Gui {
@@ -127,7 +127,7 @@ pub fn run<W>(
     repr: fn(W::Cell) -> Color,
 ) -> Result<(), String>
 where
-    W: BasicWorld,
+    W: WorldLike,
 {
     let mut millis = config.millis;
 
@@ -172,10 +172,10 @@ where
                     keycode: Some(Keycode::Q),
                     ..
                 } => break 'running,
-                Event::KeyDown {
-                    keycode: Some(Keycode::R),
-                    ..
-                } => gui.replace_with_random_world()?,
+                // Event::KeyDown {
+                //     keycode: Some(Keycode::R),
+                //     ..
+                // } => gui.replace_with_random_world()?,
                 Event::KeyDown {
                     keycode: Some(Keycode::Space),
                     ..

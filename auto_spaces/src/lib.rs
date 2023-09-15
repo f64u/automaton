@@ -10,7 +10,7 @@ pub mod sdl2_canvas;
 pub mod wasm_canvas;
 
 #[derive(Debug)]
-pub enum Spaces {
+pub enum SpaceKind {
     #[cfg(feature = "sdl2")]
     Sdl2,
 
@@ -18,13 +18,13 @@ pub enum Spaces {
     Cursive,
 }
 
-impl Display for Spaces {
+impl Display for SpaceKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self)
     }
 }
 
-impl FromStr for Spaces {
+impl FromStr for SpaceKind {
     type Err = String;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match &s.to_ascii_lowercase()[..] {
